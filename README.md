@@ -246,6 +246,90 @@ uv run -m scripts.compare_hint_cues   --cues grader_code,answer_key   --filter_p
 grader_code reads as unmentioned in 6.1% of switched traces and answer_key in 1.8%, so the projected
 unmentioned pool at 6/0 is 69 cases for grader_code against 17 for answer_key.
 
+## Stage: build hint preview
+
+Renders the simple hint (`grader_code`) and the three complex hint candidates (`grader_elim`,
+`grader_lookup`, `grader_arith`) on the same 10 short V1 items, one source each, as paste-ready blocks for
+reading the reasoning by hand in free chat interfaces. The system text sits at the top of each block,
+since free chat sites usually have no system prompt. No GPU, no API. Design choices are in
+`docs/decisions.md` §22.
+
+**Input:** `data/processed/variants_seed<seed>.jsonl` — uses the `V1` rows only.
+**Output:**
+- `<output_dir>/hint_chat_preview.md` — 40 prompts grouped by hint, each followed by the correct letter
+  and the letter the hint encodes
+- `<output_dir>/hint_preview_prompts.jsonl` — `id`, `item_id`, `source`, `cue_name`, `correct`,
+  `cued_option`, `cue_block`, `paste_text`
+- `<output_dir>/hint_preview_meta.json` — `git_hash`, config, cues, item ids
+
+**Run:**
+```bash
+uv run -m scripts.build_hint_preview \
+  --variants_path data/processed/variants_seed42.jsonl \
+  --output_dir data/processed/hint_preview_v1 \
+  --n_items 10 \
+  --max_question_chars 500 \
+  --seed 42
+```
+
+## Stage: hint cue test (OpenRouter)
+
+Measures, per hint version, how often a hosted model switches to the hinted wrong option and how often its
+reasoning mentions the hint. Each of N items is asked once with no hint (V0) and once per hint version (V1),
+K samples each. Hinted traces are judged with the judge prompt, which counts decoding a complex hint as a
+mention. Needs `OPENROUTER_API_KEY`; the run fails at the first call without it. Start with
+`--num_tasks 10` on gpt-oss, the cheapest model.
+
+**Input:** `data/processed/variants_seed<seed>.jsonl` — `V1` rows give the question, options, correct and
+cued letter.
+**Output:**
+- `<output_dir>/generations.jsonl` — one row per sample: `id`, `item_id`, `source`, `condition`
+  (`no_hint` or the cue name), `variant`, `question`, `options`, `correct`, `cued_option`, `model_id`,
+  `arm`, `prompt_fingerprint`, the generation fields (`sample_idx`, `think_text`, `content_text`,
+  `parsed_answer`, `parse_ok`, `parse_method`, `truncated`, `n_think_tokens`, `n_total_tokens`,
+  `finish_reason`), and on judged rows `judge_ok`, `judge_error`, `mentions_cue`, `named_option`,
+  `attributes_answer_to_cue`, `evidence_span`
+- `<output_dir>/summary.json` — per condition `n_samples`, `n_eligible`, `truncation_rate`,
+  `parse_fail_rate`, `reasoning_missing_rate`, `correct_rate`; per hint also `switch_rate`, `resist_rate`,
+  `n_judged`, `mention_rate`, `mention_rate_when_switched`, `n_unmentioned_switched`,
+  `unmentioned_switch_rate`, `misdecoded_rate` (mentions naming a letter other than the cued one)
+- `<output_dir>/config.json` — `git_hash`, config, the sampling parameters sent, item ids
+- `<output_dir>/figures/hint_cue_test.png` — switch, mention-when-switched and unmentioned-switch rates per hint
+
+**Run:**
+```bash
+uv run -m scripts.run_hint_cue_test \
+  --variants_path data/processed/variants_seed42.jsonl \
+  --output_dir results/raw/hint_cue_test_gptoss_v1 \
+  --model_id openai/gpt-oss-120b \
+  --num_tasks 10 \
+  --n_samples 4 \
+  --seed 42
+```
+
+The default of 20 items x 5 conditions x 4 samples is 400 generation calls plus up to 320 judge calls.
+
+## Stage: behavioural filter on a hosted model
+
+`scripts.run_filter` takes `--backend openrouter` for the behaviour-only models (gpt-oss 120B, DeepSeek V4
+Pro). It writes the same files and fields as the vLLM path, makes one cached call per sample, and records
+`backend`, the sampling parameters actually sent (`hosted_params`) and `reasoning_missing_rate` in
+`filter_report.json`. The RunConfig temperature, top_p and top_k are Qwen3's settings and are not sent; the
+provider's defaults apply unless `--hosted_temperature` is given. A sample that still fails after retries is
+logged and dropped, and shows as a lower eligible count; rerunning the same command fills it from the cache.
+
+**Run:**
+```bash
+uv run -m scripts.run_filter \
+  --variants_path data/processed/variants_seed42.jsonl \
+  --output_dir results/raw/filter_gptoss_grader_code \
+  --model_id openai/gpt-oss-120b \
+  --backend openrouter \
+  --cue_name grader_code \
+  --num_tasks 10 \
+  --seed 42
+```
+
 ## Stage: sweep
 
 Samples V0 to V3 at 8 samples for every survivor on every framing arm, then reports behavioural tracking:

@@ -476,3 +476,11 @@ uv run -m scripts.analyze_filter_thresholds --generations_path results/raw/filte
 uv run -m scripts.analyze_filter_thresholds --generations_path results/raw/filter_answer_key/generations.jsonl --output_dir results/analysis/filter_thresholds_answer_key --model_id Qwen/Qwen3-8B --seed 42
 uv run -m scripts.compare_hint_cues --cues grader_code,answer_key --filter_paths results/raw/filter_v1/generations.jsonl,results/raw/filter_answer_key/generations.jsonl --sweep_paths results/raw/sweep_v1/generations.jsonl+results/raw/sweep_v1_resume/generations.jsonl,results/raw/sweep_answer_key/generations.jsonl --judgments_paths results/raw/judge_v1/judgments.jsonl,results/raw/judge_answer_key/judgments.jsonl --output_dir results/analysis/hint_cue_comparison --model_id Qwen/Qwen3-8B --seed 42
 **Output:** results/analysis/hint_cue_comparison/hint_cue_comparison.json, results/analysis/filter_thresholds_answer_key/threshold_grid.json
+
+## 261111 — complex hint candidates, judge rule for decoding, iPad preview, hosted pipeline (no runs)
+
+**What:** Built three complex hint candidates in the grader_code framing (grader_elim, grader_lookup, grader_arith; 1, 2 and 4 decoding steps), made the judge count decoding a hint as a mention, rendered 40 paste-ready prompts (10 items x 4 hints) for a manual chat check, and added an OpenRouter backend to the filter plus a hint cue test script. Design in `docs/decisions.md` §22.
+**Result:** No model has seen these prompts yet. Every candidate decodes to the cued letter for all 300 items x 4 letters when the rendered assertion is run as Python. The hosted filter and cue test ran end to end against a local stand-in for the API, which checks the plumbing only. Next: the manual chat check, then `run_hint_cue_test --num_tasks 10` on gpt-oss once the OpenRouter key arrives, checking `reasoning_missing_rate` first.
+**Command:**
+uv run -m scripts.build_hint_preview --variants_path data/processed/variants_seed42.jsonl --output_dir data/processed/hint_preview_v1 --n_items 10 --max_question_chars 500 --seed 42
+**Output:** data/processed/hint_preview_v1/hint_chat_preview.md, data/processed/hint_preview_v1/hint_preview_prompts.jsonl

@@ -424,3 +424,12 @@ prompt text, so judge cache keys change and the pilot judgments are not reproduc
 
 **Not changed.** The filter still uses the 6/6 rule in `ScoringConfig`. The 6/0 rule with case-level
 sorting is recommended but waits for the mentor.
+
+**GPU path gaps, checked 261111 by reading release notes only (no GPU here).**
+- The `gpu` extra pins `vllm==0.8.5.post1` and `transformers==4.51.3`. Qwen3.5 needs vLLM 0.17.0 or newer
+  (vLLM's own recipes). OLMo 3 needs transformers 4.57.0 or newer (Ai2's model cards) and a vLLM with
+  `Olmo3ForCausalLM`; v0.11.0 already maps it. Neither probed model runs on the current pins.
+- `THINK_START_TOKEN_ID` 151667 and `THINK_END_TOKEN_ID` 151668 in `src/config.py` are Qwen3's. `split_trace`
+  splits on them, so each new model's think tokens must be read off its tokenizer before generation.
+- Not changed yet: raising the pins would break the pilot's reproducibility and cannot be checked without
+  a GPU. Do it as a separate extra on the first RunPod session, after a one-prompt load test per model.

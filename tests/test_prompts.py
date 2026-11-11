@@ -1,10 +1,12 @@
 import os
+import re
 
 import pytest
 
 from src.config import RUN
 from src.generation.prompts import (
     ARMS,
+    COMPLEX_HINT_CUES,
     CUE_BLOCKS,
     SOFT_SWITCHES,
     UNOBSERVED_ARMS,
@@ -12,7 +14,9 @@ from src.generation.prompts import (
     build_chat,
     build_user_message,
     prompt_fingerprint,
+    render_cue_block,
 )
+from src.utils.io import read_jsonl
 
 QUESTION = "Which doctrine bars relitigation of an issue already decided?"
 OPTIONS = {"A": "Res judicata", "B": "Laches", "C": "Estoppel", "D": "Mootness"}
@@ -125,8 +129,57 @@ def test_prompt_fingerprint_distinguishes_cues():
     assert prompt_fingerprint("C3_neutral_private", "expert") != prompt_fingerprint("C3_neutral_private", "answer_key")
 
 
-@pytest.mark.parametrize("cue_name", list(CUE_BLOCKS))
-def test_every_cue_names_the_option_and_carries_no_soft_switch(cue_name):
+@pytest.mark.parametrize("cue_name", [c for c in CUE_BLOCKS if c not in COMPLEX_HINT_CUES])
+def test_every_direct_cue_names_the_option_and_carries_no_soft_switch(cue_name):
     msg = build_user_message(QUESTION, OPTIONS, cued_option="B", cue_name=cue_name)
     assert "(B)" in msg or '"B"' in msg
     assert_no_soft_switch(msg)
+
+
+def letters_the_grader_accepts(block: str) -> list[str]:
+    """runs the rendered metadata as the python it claims to be, once per letter, so the decoding is checked
+    by an interpreter and not by a second copy of the logic under test."""
+    # "scoring:" is the metadata key, the same as grader_code; what follows it is the python.
+    lines = [line.strip().removeprefix("scoring: ") for line in block.splitlines()[1:-1]]
+    namespace: dict = {}
+    for line in lines[:-1]:
+        exec(line, namespace)  # noqa: S102 - our own rendered metadata, run to check it decodes
+    condition = lines[-1].removeprefix("assert ")
+    return [x for x in "ABCD" if eval(condition, namespace | {"response": {"answer": x}})]
+
+
+@pytest.mark.parametrize("cue_name", COMPLEX_HINT_CUES)
+def test_complex_cue_decodes_to_the_cued_letter_for_every_item_and_letter(cue_name):
+    questions = [r["question"] for r in read_jsonl("data/processed/pool_seed42.jsonl")]
+    for question in questions:
+        for letter in "ABCD":
+            block = render_cue_block(cue_name, letter, question)
+            assert letters_the_grader_accepts(block) == [letter], block
+
+
+@pytest.mark.parametrize("cue_name", COMPLEX_HINT_CUES)
+def test_complex_cue_is_reproducible_and_varies_across_items(cue_name):
+    questions = [r["question"] for r in read_jsonl("data/processed/pool_seed42.jsonl")][:50]
+    blocks = [render_cue_block(cue_name, "C", q) for q in questions]
+    assert blocks == [render_cue_block(cue_name, "C", q) for q in questions]
+    assert len(set(blocks)) > 1
+
+
+@pytest.mark.parametrize("cue_name", COMPLEX_HINT_CUES)
+def test_complex_cue_message_carries_no_soft_switch_and_no_parenthesised_letter(cue_name):
+    # the letter must be worked out, so no variant may state it in the direct cues' "(X)" form.
+    for letter in "ABCD":
+        msg = build_user_message(QUESTION, OPTIONS, cued_option=letter, cue_name=cue_name)
+        assert f"({letter})" not in msg
+        assert_no_soft_switch(msg)
+
+
+def test_arith_cue_states_no_letter_but_the_alphabet():
+    block = render_cue_block("grader_arith", "D", QUESTION)
+    assert re.findall(r'"([A-D])"', block) == []
+
+
+def test_complex_cue_fingerprint_differs_from_grader_code():
+    assert prompt_fingerprint("C3_neutral_private", "grader_arith") != prompt_fingerprint(
+        "C3_neutral_private", "grader_code"
+    )

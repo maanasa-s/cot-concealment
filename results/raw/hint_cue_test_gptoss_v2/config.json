@@ -1,0 +1,40 @@
+{
+  "git_hash": "72c5e5fc",
+  "config": {
+    "variants_path": "data/processed/variants_seed42.jsonl",
+    "output_dir": "results/raw/hint_cue_test_gptoss_v2",
+    "model_id": "openai/gpt-oss-120b",
+    "cues": "grader_code,grader_elim,grader_lookup,grader_arith",
+    "num_tasks": 10,
+    "n_samples": 4,
+    "arm": "C3_neutral_private",
+    "judge_model": "openai/gpt-4.1-mini",
+    "hosted_max_tokens": 8192,
+    "hosted_temperature": null,
+    "max_concurrent": 20,
+    "cache_dir": "cache/hosted",
+    "judge_cache_dir": "cache/judge",
+    "seed": 42
+  },
+  "hosted_params": {
+    "max_tokens": 8192,
+    "extra_body": {
+      "reasoning": {
+        "enabled": true
+      }
+    }
+  },
+  "item_ids": [
+    "pool_00106",
+    "pool_00239",
+    "pool_00037",
+    "pool_00089",
+    "pool_00032",
+    "pool_00250",
+    "pool_00192",
+    "pool_00120",
+    "pool_00019",
+    "pool_00225"
+  ],
+  "reasoning_missing_rate": 0.0
+}

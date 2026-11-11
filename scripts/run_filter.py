@@ -2,6 +2,7 @@
 # a hint and switched to the hint with one. also yields the first truncation and parse failure rates.
 # uv run -m scripts.run_filter --variants_path data/processed/variants_seed42.jsonl --output_dir results/raw/filter_v1 --model_id Qwen/Qwen3-8B --seed 42
 
+import asyncio
 import logging
 from collections import defaultdict
 from dataclasses import dataclass
@@ -11,7 +12,13 @@ import simple_parsing
 from dotenv import load_dotenv
 
 from src.config import GATES, RUN, SCORING
-from src.generation.engine import generate_chunked, load_engine, to_generations
+from src.generation.hosted import (
+    chat_messages,
+    generate_hosted,
+    hosted_params,
+    openrouter_client,
+    reasoning_missing_rate,
+)
 from src.generation.prompts import ARMS, build_chat, build_user_message, prompt_fingerprint
 from src.metrics.filter import filter_report, score_filter_item
 from src.metrics.scoring import Trace
@@ -31,10 +38,56 @@ class Config:
     engine_version: str = ""
     arm: str = "C3_neutral_private"
     cue_name: str = ""
+    # vllm runs the open weights model on a gpu; openrouter calls a hosted model and needs OPENROUTER_API_KEY.
+    backend: str = "vllm"
     chunk_size: int = 100
     num_tasks: int | None = None
     gpu_memory_utilization: float = 0.90
+    # openrouter only. hosted reasoning runs longer than qwen3-8b's, so the budget is set apart from RunConfig.
+    hosted_max_tokens: int = 8192
+    hosted_temperature: float | None = None
+    max_concurrent: int = 20
+    cache_dir: str = "cache/hosted"
     seed: int = 42
+
+
+def vllm_chunks(rows: list[dict], cue_name: str, config: Config, run):
+    from transformers import AutoTokenizer
+
+    from src.generation.engine import generate_chunked, load_engine, to_generations
+
+    tok = AutoTokenizer.from_pretrained(run.model, revision=run.revision or None)
+    engine = load_engine(run, config.gpu_memory_utilization)
+    prompts = [
+        build_chat(
+            tok,
+            ARMS[config.arm],
+            build_user_message(r["question"], r["options"], r["cued_option"], cue_name, r.get("fewshot_examples")),
+        )
+        for r in rows
+    ]
+    for offset, outputs in generate_chunked(engine, prompts, run, config.chunk_size):
+        yield offset, [to_generations(o, tok, run) for o in outputs]
+
+
+def hosted_chunks(rows: list[dict], cue_name: str, config: Config, run):
+    """failed samples are logged by generate_hosted and dropped here, so they show as fewer eligible traces."""
+    client = openrouter_client()
+    messages = [
+        chat_messages(
+            ARMS[config.arm],
+            build_user_message(r["question"], r["options"], r["cued_option"], cue_name, r.get("fewshot_examples")),
+        )
+        for r in rows
+    ]
+    params = hosted_params(config.hosted_max_tokens, config.hosted_temperature)
+    for start in range(0, len(messages), config.chunk_size):
+        chunk = messages[start : start + config.chunk_size]
+        LOGGER.info(f"hosted chunk {start // config.chunk_size + 1}, prompts {start}-{start + len(chunk)}")
+        out = asyncio.run(
+            generate_hosted(client, run.model, chunk, run.n_samples, config.cache_dir, config.max_concurrent, **params)
+        )
+        yield start, [[g for g in gens if g is not None] for gens in out]
 
 
 def main():
@@ -55,6 +108,15 @@ def main():
         update["revision"] = config.revision
     if config.engine_version:
         update["engine_version"] = config.engine_version
+    if config.backend not in ("vllm", "openrouter"):
+        raise ValueError(f"--backend must be vllm or openrouter, got {config.backend!r}")
+    is_hosted = config.backend == "openrouter"
+    # the qwen revision pin and vllm version mean nothing for a hosted model, so they are not carried over.
+    if is_hosted:
+        import openai
+
+        update |= {"engine": "openrouter", "engine_version": openai.__version__, "revision": ""}
+        update["max_tokens"] = config.hosted_max_tokens
     run = RUN.model_copy(update=update)
     run_id = out.name
 
@@ -65,27 +127,16 @@ def main():
     rows = [r for r in rows if r["item_id"] in set(item_ids)]
     LOGGER.info(f"filtering {len(item_ids)} items over {len(rows)} prompts")
 
-    from transformers import AutoTokenizer
-
-    tok = AutoTokenizer.from_pretrained(run.model, revision=run.revision or None)
-    engine = load_engine(run, config.gpu_memory_utilization)
-
     cue_name = config.cue_name or run.cue_name
-    prompts = [
-        build_chat(
-            tok,
-            ARMS[config.arm],
-            build_user_message(r["question"], r["options"], r["cued_option"], cue_name, r.get("fewshot_examples")),
-        )
-        for r in rows
-    ]
+    chunks = (hosted_chunks if is_hosted else vllm_chunks)(rows, cue_name, config, run)
 
     fingerprint = prompt_fingerprint(config.arm, cue_name)
     traces_by_item: dict[str, dict[str, list[Trace]]] = defaultdict(dict)
-    for offset, outputs in generate_chunked(engine, prompts, run, config.chunk_size):
+    all_generations = []
+    for offset, generations_per_row in chunks:
         records = []
-        for row, output in zip(rows[offset : offset + len(outputs)], outputs):
-            generations = to_generations(output, tok, run)
+        for row, generations in zip(rows[offset : offset + len(generations_per_row)], generations_per_row):
+            all_generations += generations
             records += [
                 row
                 | g.model_dump()
@@ -130,6 +181,10 @@ def main():
             "cue_name": cue_name,
             "prompt_fingerprint": fingerprint,
             "run": run.model_dump(),
+            "backend": config.backend,
+            # for openrouter the RunConfig temperature, top_p and top_k are not sent; these are what was.
+            "hosted_params": hosted_params(config.hosted_max_tokens, config.hosted_temperature) if is_hosted else None,
+            "reasoning_missing_rate": reasoning_missing_rate(all_generations),
             "report": report,
         },
     )

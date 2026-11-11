@@ -1,0 +1,55 @@
+{
+  "git_hash": "7b266fd6",
+  "config": {
+    "pool_path": "data/processed/pool_seed42.jsonl",
+    "output_dir": "data/processed/fewshot_v1",
+    "n_examples": 8,
+    "max_example_chars": 400,
+    "n_preview": 10,
+    "preview_arm": "C3_neutral_private",
+    "seed": 42
+  },
+  "cue_name": "fewshot_position",
+  "example_item_ids": [
+    "pool_00049",
+    "pool_00226",
+    "pool_00268",
+    "pool_00212",
+    "pool_00203",
+    "pool_00117",
+    "pool_00171",
+    "pool_00223"
+  ],
+  "example_sources": [
+    "mmlu_medical_genetics",
+    "mmlu_high_school_psychology",
+    "mmlu_logical_fallacies",
+    "mmlu_medical_genetics",
+    "mmlu_high_school_psychology",
+    "arc_challenge",
+    "mmlu_high_school_psychology",
+    "arc_challenge"
+  ],
+  "example_original_correct": [
+    "C",
+    "A",
+    "B",
+    "A",
+    "B",
+    "B",
+    "D",
+    "C"
+  ],
+  "v0_letters": [
+    "B",
+    "A",
+    "D",
+    "A",
+    "C",
+    "C",
+    "B",
+    "D"
+  ],
+  "n_test_items": 292,
+  "n_variant_rows": 1168
+}

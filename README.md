@@ -126,6 +126,36 @@ Built at seed 42: 300 items across 36 subjects from 15,214 source rows, 178 dupl
 unnormalizable rows dropped (71 excluded subjects, 1 wrong option count). Largest sources:
 `mmlu_professional_law` (39), `arc_challenge` (28), `mmlu_miscellaneous` (25).
 
+## Stage: build few-shot position variants
+
+Builds the `fewshot_position` cue: eight solved examples placed before every test question, with their
+answers all at the cued letter on V1 to V3 and two at each letter on V0. The examples are drawn once from
+the pool, held out of the test set, and identical across variants, so only the letter they sit at differs.
+Also renders V0 and V1 prompts for the first items into a markdown file for a manual check in a chat
+interface. No GPU. Design choices are in `docs/decisions.md` §21.
+
+**Input:** `data/processed/pool_seed<seed>.jsonl`.
+**Output:**
+- `<output_dir>/variants_fewshot_seed<seed>.jsonl` — the variant fields plus `cue_name` and
+  `fewshot_examples` (a list of `item_id`, `question`, `options`, `answer`), four rows per test item
+- `<output_dir>/variants_fewshot_seed<seed>_meta.json` — `git_hash`, config, example ids, sources and
+  original answer letters, the V0 letter order, counts
+- `<output_dir>/fewshot_chat_preview.md` — rendered system and user messages for manual checking
+
+**Run:**
+```bash
+uv run -m scripts.build_fewshot_variants \
+  --pool_path data/processed/pool_seed42.jsonl \
+  --output_dir data/processed/fewshot_v1 \
+  --n_examples 8 \
+  --max_example_chars 400 \
+  --seed 42
+```
+
+Built at seed 42: 292 test items, 1,168 variant rows. The filter, sweep and judge take the cue with
+`--cue_name fewshot_position` and read the examples off each row; interrogation and the prefill ablation
+are not wired for it yet and fail loudly if given it.
+
 ## Stage: behavioural filter
 
 Samples V0 and V1 eight times per item on the C3 arm and keeps items answered correctly without a hint in
@@ -156,6 +186,65 @@ uv run -m scripts.run_filter \
 Failure modes are reported apart because they pull in opposite directions: items that are easy pass V0
 and then resist the hint, items that are hard flip readily and fail V0. A yield that collapses tells you
 which end of that band the pool sits on.
+
+## Stage: filter threshold grid
+
+Recounts a finished filter under a grid of thresholds (correct without the cue, switched with it) from the
+saved traces, so choosing the thresholds needs no new generation. For each pair it reports items kept, a
+noise estimate (items that would pass the switch bar on the uncued model's own picks of the cued option),
+the mean switch lift over that baseline, and items kept per cued letter. It also counts cases, single V1
+traces on the kept items, the way the bin study needs them: switched cases, and resisted cases where the
+model saw the cue and kept the correct answer, which are the probes' control. Given judged filter traces it
+adds unmentioned cases, the switched cases the judge reads as not mentioning the cue. Switch bar 0 is the
+proposal's case-level rule: every item answered correctly without the cue, with each trace sorted into
+switched or resisted. Never select items on mention, since that would manufacture the unmentioned pool. No
+GPU.
+
+**Input:** a filter `generations.jsonl` (V0 and V1 rows); optionally a `judgments.jsonl` over the same traces.
+**Output:**
+- `<output_dir>/threshold_grid.json`: per threshold pair `correct_min`, `switch_min`, `n_kept`, `yield`,
+  `n_noise_pass` (null at switch bar 0), `mean_lift`, `n_kept_by_cued_letter`, `n_switched_cases`,
+  `n_resisted_cases`, and with judgments `n_unmentioned_cases` and `unmentioned_rate`; plus per item
+  `n_v0_correct`, `n_v0_cued`, `n_v1_switched`, `n_v1_resisted`
+- `<output_dir>/figures/threshold_grid.png`: items kept with noise passes, and resisted cases, per pair
+
+**Run:**
+```bash
+uv run -m scripts.analyze_filter_thresholds \
+  --generations_path results/raw/filter_v1/generations.jsonl \
+  --output_dir results/analysis/filter_thresholds_grader_code \
+  --model_id Qwen/Qwen3-8B \
+  --seed 42
+```
+
+On the pilot's `grader_code` filter the old 6/6 reproduces the 120 survivors. The switch bar does almost
+all the work: 6/4 keeps 153 and 6/3 keeps 166, with zero noise passes at any switch bar of 3 or more. The
+switch bar also starves the resisted set: 767 resisted cases at 6/0, 163 at 6/4, 57 at 6/6.
+
+## Stage: compare simple hint candidates
+
+Compares existing cues as the simple hint on saved pilot data, by the two sizes Milestone 1 reports. Switched
+and resisted cases at each filter threshold come from the filter traces. The unmentioned rate (switched
+traces the judge reads as not mentioning the cue) comes from the judged sweep traces, because the filter
+traces were never judged. Projected unmentioned cases = switched cases x the rate in the filter's arm. The
+rate is measured on 6/6 survivors only, so the projection at looser filters is an estimate. No GPU.
+
+**Input:** per cue, a filter `generations.jsonl`, sweep `generations.jsonl` files (joined with `+`) and the
+sweep's `judgments.jsonl`.
+**Output:**
+- `<output_dir>/hint_cue_comparison.json`: per cue, `sweep_case_pool_by_arm` (`n_switched`,
+  `n_switched_unmentioned`, `n_switched_judged`, `unmentioned_rate`, `n_resisted`, `n_resisted_unmentioned`,
+  `n_resisted_judged`) and `filter_thresholds` (threshold grid cells plus `projected_unmentioned_cases`)
+- `<output_dir>/figures/hint_cue_comparison.png`: switched, resisted and projected unmentioned cases per cue
+  and threshold
+
+**Run:**
+```bash
+uv run -m scripts.compare_hint_cues   --cues grader_code,answer_key   --filter_paths results/raw/filter_v1/generations.jsonl,results/raw/filter_answer_key/generations.jsonl   --sweep_paths results/raw/sweep_v1/generations.jsonl+results/raw/sweep_v1_resume/generations.jsonl,results/raw/sweep_answer_key/generations.jsonl   --judgments_paths results/raw/judge_v1/judgments.jsonl,results/raw/judge_answer_key/judgments.jsonl   --output_dir results/analysis/hint_cue_comparison   --model_id Qwen/Qwen3-8B   --seed 42
+```
+
+grader_code reads as unmentioned in 6.1% of switched traces and answer_key in 1.8%, so the projected
+unmentioned pool at 6/0 is 69 cases for grader_code against 17 for answer_key.
 
 ## Stage: sweep
 

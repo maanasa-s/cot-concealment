@@ -139,7 +139,11 @@ def main():
         engine = load_engine(run, config.gpu_memory_utilization)
 
         prompts = [
-            build_chat(tok, ARMS[arm], build_user_message(r["question"], r["options"], r["cued_option"], cue_name))
+            build_chat(
+                tok,
+                ARMS[arm],
+                build_user_message(r["question"], r["options"], r["cued_option"], cue_name, r.get("fewshot_examples")),
+            )
             for arm, r in jobs
         ]
 
@@ -239,7 +243,7 @@ def main():
         print(
             f"{arm}: n={d['n_items_complete']}/{d['n_items_requested']}, tracking all placements {tracking['point']} {tracking['ci']} "
             f"(gate >={GATES.behavioral_tracking_min}: {d['gate_tracking_passes']}), heldout {heldout['point']} {heldout['ci']}, "
-            f"per placement {({v: p['point'] for v, p in d['per_placement'].items()})}"
+            f"per placement { ({v: p['point'] for v, p in d['per_placement'].items()}) }"
         )
 
 

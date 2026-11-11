@@ -72,7 +72,11 @@ def main():
 
     cue_name = config.cue_name or run.cue_name
     prompts = [
-        build_chat(tok, ARMS[config.arm], build_user_message(r["question"], r["options"], r["cued_option"], cue_name))
+        build_chat(
+            tok,
+            ARMS[config.arm],
+            build_user_message(r["question"], r["options"], r["cued_option"], cue_name, r.get("fewshot_examples")),
+        )
         for r in rows
     ]
 

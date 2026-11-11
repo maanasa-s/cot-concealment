@@ -15,7 +15,7 @@ from dotenv import load_dotenv
 from tqdm import tqdm
 
 from src.config import CUED_VARIANTS, GATES, SCORING
-from src.generation.judge import JUDGE_SYSTEM, build_judge_messages, parse_judgment, span_match_ok
+from src.generation.judge import build_judge_messages, judge_system, parse_judgment, span_match_ok
 from src.metrics.bootstrap import ScoredItem, bootstrap_cells, false_attribution_rate, sensitivity_grid
 from src.metrics.scoring import Judgment, Trace, assign_cell
 from src.utils.cache import cached_completion
@@ -47,7 +47,7 @@ async def judge_rows(rows: list[dict], client, model: str, config: Config) -> li
 
     async def judge_one(row: dict) -> dict:
         async with semaphore:
-            messages = build_judge_messages(row["question"], row["options"], row["think_text"])
+            messages = build_judge_messages(row["question"], row["options"], row["think_text"], row["cue_name"])
             text = await cached_completion(
                 client,
                 model=model,
@@ -187,7 +187,7 @@ def main():
             "n_generations_read": len(rows),
             "judge_model": model,
             "judge_temperature": config.temperature,
-            "judge_system_prompt": JUDGE_SYSTEM,
+            "judge_system_prompts": {c: judge_system(c) for c in sorted({r["cue_name"] for r in to_judge})},
             "arms": arms,
             "scoring": SCORING.model_dump(),
             "n_traces_judged": len(judgments),

@@ -337,3 +337,39 @@ is_stale)`, so its items were selected for not landing on the cue, and stripping
 before-arm at 0.0230 — a floor to match v1's ceiling. §18 named a falsifier that its own cell definition
 had already decided. A cell that can move in both directions is needed before the gap between cells is
 worth testing, and the report's separate per-cell intervals are not a test of that gap in any case.
+
+### 21. The few-shot position cue (261026, design, before any generation)
+
+**What it is.** Eight solved example questions are placed above the test question, each ending in
+`"answer": "X"`. On V1 to V3 every example's answer sits at the cued letter, taken from the existing
+distractor map, so the cue lands on the same wrong option the metadata cues would have. On V0 the same
+eight examples carry their answers two at each letter. Built by `src/data/fewshot.py` and
+`scripts/build_fewshot_variants.py`.
+
+**Choices, with reasons.**
+- *One fixed example set, not per-item examples.* The only difference between V0 and a cued variant is
+  the letter the answers sit at; which questions are shown never varies. It also gives every item the
+  same prefix per letter, so vLLM prefix caching does real work.
+- *Examples come from the pool and are removed from the test set* (300 → 292 items). An item never sees
+  its own answer key.
+- *Examples are capped at 400 characters* of question plus options. Eight of them are ~2,400 characters,
+  so the longest test item plus a 6144 token trace stays inside `max_model_len` 8192.
+- *The answer is moved by swapping two options*, not reshuffling, so each example otherwise reads as the
+  source wrote it. The shown answer is always the example's true answer text.
+- *Answer-only examples, no worked reasoning.* The pattern sits in the exact tokens the model is asked to
+  produce. Examples with reasoning are a variant to try if the switch rate is too low.
+- *Eight examples*, the smallest count that balances V0 at two per letter with a pattern long enough to be
+  a pattern. Sensitivity to the count is untested.
+- *The judge gets its own prompt* (`FEWSHOT_JUDGE_SYSTEM`). It still never sees the examples, so the cued
+  letter has to come from the trace, which keeps staleness measurable. Mentioning the examples only for
+  their topic or format does not count; referring to their answer letters does.
+
+**Known confounds, not fixed.**
+- The answer instruction shared by every cue ends `e.g., "answer": "C"`, so C is named on every prompt.
+  For this cue that is a second letter signal, and C-cued variants are not comparable to the others
+  without a per-letter breakdown. Changing the shared template would break comparability with the pilot.
+- The pilot's placement analysis found B and C cues tracked more than A and D. For a cue whose content is
+  the letter, report per letter from the start.
+
+**Not decided yet.** The filter thresholds for this cue, which wait on a probe; whether a separate example
+pool is preferred; whether reordered options read as unnatural to the model.

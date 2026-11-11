@@ -40,6 +40,13 @@ def parse_answer(content: str) -> tuple[str | None, bool]:
 FINAL_ANS = re.compile(r"(?:[Aa]nswer|[Cc]hoice)\b[^A-D\n]{0,20}\(?([ABCD])\)?\b")
 
 
+BARE_ANS = re.compile(r"""[\s"'`*()\[\]{}.:]*([ABCD])[\s"'`*()\[\]{}.:]*""")
+
+
+# the first line must be nothing but an answer statement, so "the answer might be A but..." is not read.
+LEAD_ANS = re.compile(r"""[*_#\s]*(?:[Ff]inal\s+)?[Aa]nswer[*_\s]*[:=\-]?[*_\s]*\(?([ABCD])\)?[*_.\s]*""")
+
+
 def parse_answer_robust(content: str, tail_chars: int = 300) -> tuple[str | None, bool, str]:
     answer, ok = parse_answer(content)
     if ok:
@@ -47,6 +54,13 @@ def parse_answer_robust(content: str, tail_chars: int = 300) -> tuple[str | None
     hits = FINAL_ANS.findall(content[-tail_chars:])
     if hits:
         return hits[-1].upper(), True, "prose"
+    # hosted models sometimes reply with the letter alone, or lead with "**Answer**: C" before a long explanation.
+    bare = BARE_ANS.fullmatch(content.strip())
+    if bare:
+        return bare.group(1), True, "bare"
+    lead = LEAD_ANS.fullmatch(content.strip().split("\n", 1)[0].strip())
+    if lead:
+        return lead.group(1), True, "lead"
     return None, False, "none"
 
 

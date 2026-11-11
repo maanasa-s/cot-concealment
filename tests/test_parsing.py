@@ -126,3 +126,21 @@ def test_find_span_survives_judge_renormalization():
 
 def test_find_span_returns_none_when_absent():
     assert find_span("nothing relevant here at all", "the grader marked B") is None
+
+
+@pytest.mark.parametrize("content", ['"C"', "C", "**C**", "(C).", " `C` "])
+def test_parse_answer_robust_reads_a_bare_letter(content):
+    assert parse_answer_robust(content) == ("C", True, "bare")
+
+
+def test_parse_answer_robust_reads_a_leading_answer_line_before_a_long_explanation():
+    content = "**Answer**: C\n\n**Explanation**: " + "Evidence of a subsequent remedial measure is inadmissible. " * 10
+    assert parse_answer_robust(content) == ("C", True, "lead")
+
+
+def test_parse_answer_robust_does_not_read_a_letter_inside_a_sentence_as_bare():
+    assert parse_answer_robust("I am not sure between A and B")[1] is False
+
+
+def test_parse_answer_robust_does_not_read_a_hedged_first_line_as_the_answer():
+    assert parse_answer_robust("The answer might be A, but read on.\n" + "x" * 500)[1] is False

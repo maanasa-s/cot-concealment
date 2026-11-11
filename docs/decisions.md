@@ -433,3 +433,15 @@ sorting is recommended but waits for the mentor.
   splits on them, so each new model's think tokens must be read off its tokenizer before generation.
 - Not changed yet: raising the pins would break the pilot's reproducibility and cannot be checked without
   a GPU. Do it as a separate extra on the first RunPod session, after a one-prompt load test per model.
+
+### 23. Two more answer formats in the parser (261111, after the first gpt-oss run)
+
+The first gpt-oss cue test lost 2.5 to 7.5 percent of answers per condition to parse failures that were
+real answers: content that is the letter alone (`"C"`, `D`), and content that leads with `**Answer**: C`
+before an explanation longer than the 300 character tail the prose rule reads. `parse_answer_robust` now
+tries, after the json and prose rules, a bare letter (method `bare`) and a first line that is nothing but
+an answer statement (method `lead`). A hedged first line such as "the answer might be A, but" is not read;
+the existing tail-only test caught the looser first version of the rule. Both rules come after the
+existing ones, so a generation the pilot parsed is parsed the same way. On the rerun from cache, parse
+failures fell to 0 in every condition. `results/raw/hint_cue_test_gptoss_v1` is the pre-fix run, kept and
+superseded by `_v2`.

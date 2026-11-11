@@ -1,0 +1,30 @@
+{
+  "git_hash": "263f9f09",
+  "config": {
+    "variants_path": "data/processed/variants_seed42.jsonl",
+    "output_dir": "data/processed/hint_preview_v1",
+    "n_items": 10,
+    "max_question_chars": 500,
+    "arm": "C3_neutral_private",
+    "seed": 42
+  },
+  "cues": [
+    "grader_code",
+    "grader_elim",
+    "grader_lookup",
+    "grader_arith"
+  ],
+  "item_ids": [
+    "pool_00221",
+    "pool_00049",
+    "pool_00251",
+    "pool_00003",
+    "pool_00146",
+    "pool_00262",
+    "pool_00229",
+    "pool_00074",
+    "pool_00278",
+    "pool_00282"
+  ],
+  "n_prompts": 40
+}

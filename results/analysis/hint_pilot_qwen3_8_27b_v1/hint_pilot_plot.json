@@ -1,0 +1,34 @@
+{
+  "git_hash": "0afaa45d",
+  "config": {
+    "summary_path": "results/raw/hint_pilot_qwen3_8_27b_v1/summary.json",
+    "output_dir": "results/analysis/hint_pilot_qwen3_8_27b_v1",
+    "seed": 42
+  },
+  "n_known_items": {
+    "no_hint": 48,
+    "fewshot_none": 47
+  },
+  "outcome_counts": {
+    "authority": {
+      "flipped": 6,
+      "resisted": 86,
+      "dropped": 1
+    },
+    "answer_key_computed": {
+      "flipped": 89,
+      "resisted": 7,
+      "dropped": 0
+    },
+    "fewshot_position": {
+      "flipped": 0,
+      "resisted": 94,
+      "dropped": 0
+    },
+    "fewshot_sequence": {
+      "flipped": 0,
+      "resisted": 94,
+      "dropped": 0
+    }
+  }
+}

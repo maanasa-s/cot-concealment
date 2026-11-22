@@ -330,6 +330,26 @@ uv run -m scripts.compare_hint_cue_tests \
   --seed 42
 ```
 
+## Stage: plot a hint cue pilot
+
+Draws one pilot run of `run_hint_cue_test`: what the model did with each hint on known questions (flipped,
+resisted, dropped), mention and evaluation-awareness rates, and the proposal's three pilot checks against
+their thresholds. No API calls.
+
+**Input:** a `summary.json` from `run_hint_cue_test` run with `--pairs`; its `generations.jsonl` is read from
+the same folder.
+**Output:**
+- `<output_dir>/figures/hint_pilot.png` — the three panels
+- `<output_dir>/hint_pilot_plot.json` — `git_hash`, config, known-item counts and outcome counts per hint
+
+**Run:**
+```bash
+uv run -m scripts.plot_hint_pilot \
+  --summary_path results/raw/hint_pilot_qwen3_8_27b_v1/summary.json \
+  --output_dir results/analysis/hint_pilot_qwen3_8_27b_v1 \
+  --seed 42
+```
+
 ## Stage: behavioural filter on a hosted model
 
 `scripts.run_filter` takes `--backend openrouter` for the behaviour-only models (gpt-oss 120B, DeepSeek V4

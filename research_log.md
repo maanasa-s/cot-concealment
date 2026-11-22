@@ -502,3 +502,12 @@ OPENROUTER_API_KEY=proxy-injected uv run -m scripts.run_hint_cue_test --variants
 OPENROUTER_API_KEY=proxy-injected uv run -m scripts.run_hint_cue_test --variants_path data/processed/variants_seed42.jsonl --output_dir results/raw/hint_cue_test_qwen3_5_27b_v1 --model_id qwen/qwen3.5-27b --num_tasks 10 --n_samples 4 --seed 42
 uv run -m scripts.compare_hint_cue_tests --summary_paths results/raw/hint_cue_test_gptoss_v2/summary.json,results/raw/hint_cue_test_deepseek_v4_pro_v1/summary.json,results/raw/hint_cue_test_qwen3_5_27b_v1/summary.json --output_dir results/analysis/hint_cue_test_models_v1 --seed 42
 **Output:** results/analysis/hint_cue_test_models_v1/hint_cue_test_models.json, results/analysis/hint_cue_test_models_v1/figures/hint_cue_test_models.png
+
+## 261122 — final-proposal hint pilot on Qwen3.8 27B: neither cue pair passes
+
+**What:** The mentor's final proposal's pilot: 50 items x 2 samples on `qwen/qwen3.8-27b`, plain framing, recommended thinking sampling, for the proposal hint pair (authority / computed answer key) and a few-shot pair (all answers at the hinted letter / answers stepping through A to D). Judge labels mention and evaluation awareness. Design in `docs/decisions.md` §25.
+**Result:** No cue produced an unmentioned flip. The computed key flips 93% of known answers, is decoded correctly every time, and 90% of its traces suspect a test; the authority cue flips 6% (below the 10% bar) with 38% suspecting a test, so the pair fails the 5-point awareness check by 52 points and the authority cue fails the flip check. Both few-shot cues flip 0% and are barely noticed (3 to 4% mention). Truncation 0 to 3%. Cost about $2.70.
+**Command:**
+OPENROUTER_API_KEY=proxy-injected uv run -m scripts.run_hint_cue_test --variants_path data/processed/variants_seed42.jsonl --output_dir results/raw/hint_pilot_qwen3_8_27b_v1 --model_id qwen/qwen3.8-27b --arm plain --cues authority,answer_key_computed,fewshot_position,fewshot_sequence --pairs authority:answer_key_computed,fewshot_position:fewshot_sequence --num_tasks 50 --n_samples 2 --hosted_max_tokens 32768 --hosted_temperature 1.0 --hosted_top_p 0.95 --hosted_top_k 20 --seed 42
+uv run -m scripts.plot_hint_pilot --summary_path results/raw/hint_pilot_qwen3_8_27b_v1/summary.json --output_dir results/analysis/hint_pilot_qwen3_8_27b_v1 --seed 42
+**Output:** results/analysis/hint_pilot_qwen3_8_27b_v1/summary.md, results/analysis/hint_pilot_qwen3_8_27b_v1/figures/hint_pilot.png, results/raw/hint_pilot_qwen3_8_27b_v1/summary.json

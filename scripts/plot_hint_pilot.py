@@ -54,6 +54,7 @@ def main():
     generations = read_jsonl(summary_path.parent / "generations.jsonl")
     hinted = [s for s in summary["summaries"] if s["condition"] not in CONTROLS]
     names = [s["condition"] for s in hinted]
+    labels = [n.replace("_", "\n", 1) for n in names]
     known = {c: known_items(generations, c) for c in CONTROLS}
     counts = {
         s["condition"]: outcome_counts(
@@ -62,7 +63,7 @@ def main():
         for s in hinted
     }
 
-    fig, axes = plt.subplots(1, 3, figsize=(16, 5))
+    fig, axes = plt.subplots(1, 3, figsize=(18, 6), gridspec_kw={"width_ratios": [1, 1, 1.5]})
     x = np.arange(len(names))
 
     ax = axes[0]
@@ -72,11 +73,11 @@ def main():
         values = np.array([counts[n][outcome] for n in names]) / totals
         ax.bar(x, values, 0.6, bottom=bottom, label=outcome, color=color)
         bottom += values
-    ax.set_xticks(x, names, rotation=20, ha="right")
+    ax.set_xticks(x, labels, fontsize=9)
     ax.set_ylim(0, 1)
     ax.set_ylabel("Share of answers on known items")
     ax.set_title("What the model did with the hint")
-    ax.legend(frameon=False, loc="upper right", fontsize=8)
+    ax.legend(frameon=False, fontsize=8, ncol=3, loc="upper center", bbox_to_anchor=(0.5, -0.14))
 
     ax = axes[1]
     series = {
@@ -86,22 +87,21 @@ def main():
     for i, (label, values) in enumerate(series.items()):
         ax.bar(x + (i - 0.5) * 0.35, [v or 0 for v in values], 0.35, label=label)
         for xi, v in zip(x + (i - 0.5) * 0.35, values):
-            if v is None:
-                ax.text(xi, 0.02, "n/a", ha="center", fontsize=7)
-    ax.set_xticks(x, names, rotation=20, ha="right")
-    ax.set_ylim(0, 1)
+            ax.text(xi, (v or 0) + 0.01, "n/a" if v is None else f"{v:.2f}", ha="center", fontsize=7)
+    ax.set_xticks(x, labels, fontsize=9)
+    ax.set_ylim(0, 1.05)
     ax.set_ylabel("Rate")
     ax.set_title("Mention and evaluation awareness")
-    ax.legend(frameon=False, fontsize=8)
+    ax.legend(frameon=False, fontsize=8, ncol=2, loc="upper center", bbox_to_anchor=(0.5, -0.14))
 
     ax = axes[2]
     rows = []
     for c in summary["pilot_checks"]:
         for cue, flip in c["flip_rate_corrected_known"].items():
-            rows.append((f"{cue}: flip >= 10%", flip or 0, 0.10, c["flips_at_least_10pct"][cue]))
+            rows.append((f"{cue}\nflip >= 10%", flip or 0, 0.10, c["flips_at_least_10pct"][cue]))
         rows.append(
             (
-                f"{c['complex']}: on-cue >= 70%",
+                f"{c['complex']}\non-cue >= 70%",
                 c["complex_cued_share"] or 0,
                 0.70,
                 c["complex_cued_share_at_least_70pct"],
@@ -109,7 +109,7 @@ def main():
         )
         rows.append(
             (
-                f"{c['simple']} vs {c['complex']}: awareness gap <= 5pp",
+                f"awareness gap <= 5pp\n{c['simple']} vs {c['complex']}",
                 c["awareness_gap"] or 0,
                 0.05,
                 c["awareness_within_5pp"],
@@ -130,7 +130,7 @@ def main():
         f"Hint cue pilot on {summary['model_id']}, {summary.get('arm', '')} framing\n"
         f"known items: {n_known['no_hint']} (no-hint control), {n_known['fewshot_none']} (few-shot control)"
     )
-    fig.tight_layout()
+    fig.tight_layout(rect=(0, 0.02, 1, 1))
     out = Path(config.output_dir)
     figure_path = out / "figures" / "hint_pilot.png"
     figure_path.parent.mkdir(parents=True, exist_ok=True)

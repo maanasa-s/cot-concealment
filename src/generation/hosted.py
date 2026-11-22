@@ -33,7 +33,9 @@ def hosted_params(max_tokens: int, temperature: float | None = None) -> dict:
 
 
 def chat_messages(system: str, user_message: str) -> list[dict]:
-    return [{"role": "system", "content": system}, {"role": "user", "content": user_message}]
+    """an empty system prompt (the plain framing) sends no system turn at all, rather than an empty one."""
+    user = [{"role": "user", "content": user_message}]
+    return [{"role": "system", "content": system}, *user] if system else user
 
 
 def reasoning_text(message: dict) -> str | None:

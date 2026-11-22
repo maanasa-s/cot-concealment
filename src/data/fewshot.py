@@ -42,6 +42,13 @@ def balanced_letters(n_examples: int, seed: int) -> list[str]:
     return letters
 
 
+def sequence_letters(n_examples: int, cued_option: str) -> list[str]:
+    """the complex few-shot cue: answers step through A, B, C, D in order and the test question is the next
+    step, so its letter is the cued one only for a model that works out where the cycle has reached."""
+    end = OPTIONS.index(cued_option)
+    return [OPTIONS[(end - n_examples + i) % len(OPTIONS)] for i in range(n_examples)]
+
+
 def build_examples(examples: list[Item], letters: list[str]) -> list[dict]:
     return [
         {

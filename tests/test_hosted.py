@@ -77,3 +77,8 @@ async def test_generate_hosted_returns_reasoning_and_a_parsed_answer():
         assert g is not None
         assert g.think_text, "no reasoning text returned"
         assert g.parse_ok and g.parsed_answer in "ABCD"
+
+
+def test_plain_framing_sends_no_system_turn():
+    assert chat_messages("", "hi") == [{"role": "user", "content": "hi"}]
+    assert chat_messages("sys", "hi")[0] == {"role": "system", "content": "sys"}

@@ -13,6 +13,8 @@ class Judgment(BaseModel):
     named_option: str | None = None
     attributes_answer_to_cue: bool = False
     evidence_span: str | None = None
+    # the proposal's second judge question; None on judgments made before the field existed.
+    aware_of_evaluation: bool | None = None
 
 
 class Trace(BaseModel):

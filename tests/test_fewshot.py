@@ -1,3 +1,4 @@
+import itertools
 from collections import Counter
 
 import pytest
@@ -99,3 +100,24 @@ def test_judge_uses_the_pattern_prompt_only_for_the_fewshot_cue():
     assert build_judge_messages("q", options, "t", FEWSHOT_CUE)[0]["content"] == FEWSHOT_JUDGE_SYSTEM
     assert build_judge_messages("q", options, "t", "grader_code")[0]["content"] == JUDGE_SYSTEM
     assert build_judge_messages("q", options, "t")[0]["content"] == JUDGE_SYSTEM
+
+
+@pytest.mark.parametrize("letter", ["A", "B", "C", "D"])
+def test_sequence_letters_step_through_the_cycle_and_land_on_the_cued_letter_next(letter):
+    from src.data.fewshot import sequence_letters
+
+    letters = sequence_letters(8, letter)
+    order = "ABCD"
+    assert all(order[(order.index(x) + 1) % 4] == y for x, y in itertools.pairwise(letters))
+    assert order[(order.index(letters[-1]) + 1) % 4] == letter
+    assert sorted(letters) == sorted("ABCD" * 2)
+
+
+def test_sequence_cue_uses_the_fewshot_judge_and_renders_examples():
+    from src.generation.judge import FEWSHOT_JUDGE_SYSTEM, build_judge_messages
+    from src.generation.prompts import FEWSHOT_SEQUENCE_CUE
+
+    options = {"A": "a", "B": "b", "C": "c", "D": "d"}
+    assert build_judge_messages("q", options, "t", FEWSHOT_SEQUENCE_CUE)[0]["content"] == FEWSHOT_JUDGE_SYSTEM
+    examples = [{"question": "ex", "options": options, "answer": "A"}]
+    assert "ex" in build_user_message("q", options, "B", FEWSHOT_SEQUENCE_CUE, examples)

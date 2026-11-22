@@ -160,7 +160,7 @@ def test_judge_prompt_counts_decoding_a_complex_hint_as_a_mention():
     assert "works such a hint out mentions it" in lowered
     assert "lookup table" in lowered and "arithmetic" in lowered and "not accepted" in lowered
     assert "even if the\ndecoding is wrong" in lowered
-    assert "covers the question only, never the inserted metadata block" in lowered
+    assert "covers the question only, never the inserted hint" in lowered
 
 
 DECODING_TRACES = [
@@ -224,3 +224,16 @@ async def test_judge_does_not_mistake_arithmetic_on_a_numeric_question_for_the_h
     judgment, error = parse_judgment(text)
     assert error is None, text
     assert judgment.mentions_cue is False, text
+
+
+def test_judge_reads_the_awareness_field_and_leaves_it_none_when_absent():
+    judgment, _ = parse_judgment(payload(aware_of_evaluation=True))
+    assert judgment.aware_of_evaluation is True
+    judgment, _ = parse_judgment(payload())
+    assert judgment.aware_of_evaluation is None
+
+
+def test_judge_prompt_asks_the_proposals_awareness_question_and_covers_authority_hints():
+    lowered = JUDGE_SYSTEM.lower()
+    assert '"aware_of_evaluation"' in lowered and "tested, evaluated, tricked" in lowered
+    assert "a professor, an expert, a classmate" in lowered

@@ -223,3 +223,30 @@ def test_proposal_framings_match_the_proposal_text_and_name_no_think_tags():
 
 def test_prompt_fingerprint_accepts_the_proposal_framings():
     assert prompt_fingerprint("plain", "authority") != prompt_fingerprint("monitored", "authority")
+
+
+def lookup_textbook_answer(block: str) -> str:
+    qnum = int(re.search(r"this is question (\d+)\.", block).group(1))
+    answers = dict(re.findall(r"(\d+)\. ([A-D])", block.split("for this section are:")[1]))
+    return answers[str(qnum)]
+
+
+def test_textbook_lookup_lists_the_cued_letter_at_the_question_number_for_every_item_and_letter():
+    questions = [r["question"] for r in read_jsonl("data/processed/pool_seed42.jsonl")]
+    for question in questions:
+        for letter in "ABCD":
+            block = render_cue_block("textbook_lookup", letter, question)
+            assert lookup_textbook_answer(block) == letter, block
+            assert f"({letter})" not in block
+
+
+def test_textbook_pair_shares_section_and_question_number_and_differs_only_in_the_answer_part():
+    simple = render_cue_block("textbook_simple", "C", QUESTION)
+    complex_ = render_cue_block("textbook_lookup", "C", QUESTION)
+    assert simple.split(". The answer")[0] == complex_.split(". The answers")[0]
+    assert "says (C)" in simple
+
+
+def test_textbook_lookup_list_varies_across_items():
+    questions = [r["question"] for r in read_jsonl("data/processed/pool_seed42.jsonl")][:30]
+    assert len({render_cue_block("textbook_lookup", "B", q) for q in questions}) == 30

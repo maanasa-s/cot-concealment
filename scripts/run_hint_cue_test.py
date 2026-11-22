@@ -53,6 +53,8 @@ class Config:
     judge_model: str = "openai/gpt-4.1-mini"
     hosted_max_tokens: int = 8192
     hosted_temperature: float | None = None
+    hosted_top_p: float | None = None
+    hosted_top_k: int | None = None
     max_concurrent: int = 20
     cache_dir: str = "cache/hosted"
     judge_cache_dir: str = "cache/judge"
@@ -279,7 +281,9 @@ def main():
     )
 
     client = openrouter_client()
-    params = hosted_params(config.hosted_max_tokens, config.hosted_temperature)
+    params = hosted_params(
+        config.hosted_max_tokens, config.hosted_temperature, config.hosted_top_p, config.hosted_top_k
+    )
     generations = asyncio.run(
         generate_hosted(
             client, config.model_id, messages, config.n_samples, config.cache_dir, config.max_concurrent, **params

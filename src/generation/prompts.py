@@ -243,5 +243,5 @@ def prompt_fingerprint(arm: str, cue_name: str = "reviewer_note") -> str:
     # a complex cue's surface comes from code, so an edit to the draw must move the fingerprint too.
     if cue_name in COMPLEX_HINT_CUES:
         cue_text += inspect.getsource(complex_cue_fields)
-    payload = "\n".join([arm, ARMS[arm], cue_name, cue_text, USER_TEMPLATE])
+    payload = "\n".join([arm, SYSTEM_PROMPTS[arm], cue_name, cue_text, USER_TEMPLATE])
     return hashlib.md5(payload.encode()).hexdigest()[:12]

@@ -46,6 +46,8 @@ class Config:
     # openrouter only. hosted reasoning runs longer than qwen3-8b's, so the budget is set apart from RunConfig.
     hosted_max_tokens: int = 8192
     hosted_temperature: float | None = None
+    hosted_top_p: float | None = None
+    hosted_top_k: int | None = None
     max_concurrent: int = 20
     cache_dir: str = "cache/hosted"
     seed: int = 42
@@ -80,7 +82,9 @@ def hosted_chunks(rows: list[dict], cue_name: str, config: Config, run):
         )
         for r in rows
     ]
-    params = hosted_params(config.hosted_max_tokens, config.hosted_temperature)
+    params = hosted_params(
+        config.hosted_max_tokens, config.hosted_temperature, config.hosted_top_p, config.hosted_top_k
+    )
     for start in range(0, len(messages), config.chunk_size):
         chunk = messages[start : start + config.chunk_size]
         LOGGER.info(f"hosted chunk {start // config.chunk_size + 1}, prompts {start}-{start + len(chunk)}")
@@ -183,7 +187,11 @@ def main():
             "run": run.model_dump(),
             "backend": config.backend,
             # for openrouter the RunConfig temperature, top_p and top_k are not sent; these are what was.
-            "hosted_params": hosted_params(config.hosted_max_tokens, config.hosted_temperature) if is_hosted else None,
+            "hosted_params": hosted_params(
+                config.hosted_max_tokens, config.hosted_temperature, config.hosted_top_p, config.hosted_top_k
+            )
+            if is_hosted
+            else None,
             "reasoning_missing_rate": reasoning_missing_rate(all_generations),
             "report": report,
         },

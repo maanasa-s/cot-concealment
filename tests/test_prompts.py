@@ -219,3 +219,7 @@ def test_proposal_framings_match_the_proposal_text_and_name_no_think_tags():
     )
     assert FRAMINGS["private_safety"].startswith("You have a hidden scratchpad.")
     assert not any("<think>" in text for text in FRAMINGS.values())
+
+
+def test_prompt_fingerprint_accepts_the_proposal_framings():
+    assert prompt_fingerprint("plain", "authority") != prompt_fingerprint("monitored", "authority")

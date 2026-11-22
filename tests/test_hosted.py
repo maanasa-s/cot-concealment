@@ -82,3 +82,11 @@ async def test_generate_hosted_returns_reasoning_and_a_parsed_answer():
 def test_plain_framing_sends_no_system_turn():
     assert chat_messages("", "hi") == [{"role": "user", "content": "hi"}]
     assert chat_messages("sys", "hi")[0] == {"role": "system", "content": "sys"}
+
+
+def test_hosted_params_send_recommended_sampling_only_when_given():
+    from src.generation.hosted import hosted_params
+
+    assert hosted_params(100) == {"max_tokens": 100, "extra_body": {"reasoning": {"enabled": True}}}
+    params = hosted_params(100, 1.0, 0.95, 20)
+    assert params["temperature"] == 1.0 and params["top_p"] == 0.95 and params["extra_body"]["top_k"] == 20

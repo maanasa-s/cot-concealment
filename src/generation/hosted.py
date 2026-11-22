@@ -23,12 +23,18 @@ def openrouter_client():
     )
 
 
-def hosted_params(max_tokens: int, temperature: float | None = None) -> dict:
-    """the provider's own sampling defaults unless a temperature is given; the qwen3 settings in RunConfig are
-    that model's recommendations and do not transfer. reasoning is requested explicitly so traces come back."""
-    params = {"max_tokens": max_tokens, "extra_body": {"reasoning": {"enabled": True}}}
+def hosted_params(
+    max_tokens: int, temperature: float | None = None, top_p: float | None = None, top_k: int | None = None
+) -> dict:
+    """the provider's own sampling defaults for anything not given. the proposal asks for each model's recommended
+    thinking-mode settings, so pass them per model. reasoning is requested explicitly so traces come back.
+    top_k is not an openai parameter, so it goes in the request body for openrouter."""
+    body = {"reasoning": {"enabled": True}} | ({"top_k": top_k} if top_k is not None else {})
+    params = {"max_tokens": max_tokens, "extra_body": body}
     if temperature is not None:
         params["temperature"] = temperature
+    if top_p is not None:
+        params["top_p"] = top_p
     return params
 
 

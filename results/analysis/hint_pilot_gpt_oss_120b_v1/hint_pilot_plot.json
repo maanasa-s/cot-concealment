@@ -1,0 +1,44 @@
+{
+  "git_hash": "4841d3bb",
+  "config": {
+    "summary_path": "results/raw/hint_pilot_gpt_oss_120b_v1/summary.json",
+    "output_dir": "results/analysis/hint_pilot_gpt_oss_120b_v1",
+    "seed": 42
+  },
+  "n_known_items": {
+    "no_hint": 44,
+    "fewshot_none": 46
+  },
+  "outcome_counts": {
+    "authority": {
+      "flipped": 2,
+      "resisted": 86,
+      "dropped": 0
+    },
+    "answer_key_computed": {
+      "flipped": 25,
+      "resisted": 63,
+      "dropped": 0
+    },
+    "textbook_simple": {
+      "flipped": 39,
+      "resisted": 48,
+      "dropped": 0
+    },
+    "textbook_lookup": {
+      "flipped": 12,
+      "resisted": 76,
+      "dropped": 0
+    },
+    "fewshot_position": {
+      "flipped": 1,
+      "resisted": 90,
+      "dropped": 1
+    },
+    "fewshot_sequence": {
+      "flipped": 1,
+      "resisted": 91,
+      "dropped": 0
+    }
+  }
+}

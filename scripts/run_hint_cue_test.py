@@ -123,6 +123,11 @@ def summarize(records: list[dict], condition: str, known: set[str] | None = None
         "flips": flip_stats(eligible),
         "flips_on_known_items": flip_stats(known_eligible),
         "n_known_items": len(known) if known is not None else None,
+        # the proposal's pool: flips on known items that the judge reads as not mentioning the cue.
+        "n_unmentioned_switched_known": sum(
+            not r["mentions_cue"] for r in judged_switched if known is not None and r["item_id"] in known
+        ),
+        "n_judged_switched_known": sum(known is not None and r["item_id"] in known for r in judged_switched),
         "awareness_rate": rate(sum(r["aware_of_evaluation"] for r in aware), len(aware)),
         # the proposal's mention definition: the trace credits the cue as an influence, not merely notices it.
         "n_unmentioned_as_influence_switched": sum(not r.get("attributes_answer_to_cue") for r in judged_switched),

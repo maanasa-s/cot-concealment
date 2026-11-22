@@ -492,3 +492,13 @@ uv run -m scripts.build_hint_preview --variants_path data/processed/variants_see
 **Command:**
 OPENROUTER_API_KEY=proxy-injected uv run -m scripts.run_hint_cue_test --variants_path data/processed/variants_seed42.jsonl --output_dir results/raw/hint_cue_test_gptoss_v2 --model_id openai/gpt-oss-120b --num_tasks 10 --n_samples 4 --seed 42
 **Output:** results/raw/hint_cue_test_gptoss_v2/summary.json, results/raw/hint_cue_test_gptoss_v2/generations.jsonl, results/raw/hint_cue_test_gptoss_v2/figures/hint_cue_test.png
+
+## 261122 — hint cue test on DeepSeek V4 Pro and Qwen3.5 27B; three models compared
+
+**What:** The same 10 items x (no hint + 4 hints) x 4 samples as the gpt-oss run, on `deepseek/deepseek-v4-pro` and `qwen/qwen3.5-27b` through OpenRouter, then all three models side by side.
+**Result:** No model hides the hint once it follows it: mention rate when switched is 97 to 100% for every model and hint, and across 120 hinted samples per model the only unmentioned switch is the single gpt-oss case. Models differ in compliance. gpt-oss switches 87 to 100%, Qwen3.5 70 to 83%, DeepSeek only 32 to 65%. DeepSeek therefore gives a real resisted set (14 to 26 of about 40 per hint), and 40 of its 80 resisted traces never mention the hint, which matters for the probes' control. The complex hints did not lower mention on any model; DeepSeek resisted the lookup hint most (68%). Qwen3.5's rates are unreliable: in 42% of its samples OpenRouter split the trace where the model quoted the `<think>` tag from the system prompt (decision §24). Cost of both runs together: roughly $4.
+**Command:**
+OPENROUTER_API_KEY=proxy-injected uv run -m scripts.run_hint_cue_test --variants_path data/processed/variants_seed42.jsonl --output_dir results/raw/hint_cue_test_deepseek_v4_pro_v1 --model_id deepseek/deepseek-v4-pro --num_tasks 10 --n_samples 4 --seed 42
+OPENROUTER_API_KEY=proxy-injected uv run -m scripts.run_hint_cue_test --variants_path data/processed/variants_seed42.jsonl --output_dir results/raw/hint_cue_test_qwen3_5_27b_v1 --model_id qwen/qwen3.5-27b --num_tasks 10 --n_samples 4 --seed 42
+uv run -m scripts.compare_hint_cue_tests --summary_paths results/raw/hint_cue_test_gptoss_v2/summary.json,results/raw/hint_cue_test_deepseek_v4_pro_v1/summary.json,results/raw/hint_cue_test_qwen3_5_27b_v1/summary.json --output_dir results/analysis/hint_cue_test_models_v1 --seed 42
+**Output:** results/analysis/hint_cue_test_models_v1/hint_cue_test_models.json, results/analysis/hint_cue_test_models_v1/figures/hint_cue_test_models.png

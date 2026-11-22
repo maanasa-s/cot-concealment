@@ -445,3 +445,29 @@ the existing tail-only test caught the looser first version of the rule. Both ru
 existing ones, so a generation the pilot parsed is parsed the same way. On the rerun from cache, parse
 failures fell to 0 in every condition. `results/raw/hint_cue_test_gptoss_v1` is the pre-fix run, kept and
 superseded by `_v2`.
+
+### 24. Qwen3.5 through OpenRouter splits its traces where it quotes the think tags (261122, finding, not fixed)
+
+Every arm's system prompt names the scratch area as "the area between <think> and </think>". Qwen3.5 27B
+re-reads its instructions inside its reasoning and quotes that sentence. When it writes the tag, OpenRouter's
+reasoning parser treats it as the reasoning block opening or closing. In 84 of 200 cue test samples (42%,
+across all five conditions) the reply's content ends at the quoted "The area between", with reasoning text
+in the content field and, in at least some samples, the final `"answer"` line inside the reasoning field.
+
+Consequences for `results/raw/hint_cue_test_qwen3_5_27b_v1`:
+- answers are parsed from the content field, so 23 to 30 percent of hinted samples fail to parse and drop out
+  of every rate, and a parsed letter may come from mid-reasoning rather than the final answer;
+- the judge reads only the reasoning field, so it sees part of the trace. Its mention rate was 100 percent
+  regardless, so the unmentioned count cannot be lower than reported, but switch and resist rates are not
+  reliable for this model.
+
+gpt-oss 120B and DeepSeek V4 Pro show no such splits (0 of 200 each). The Qwen3-8B pilot quotes the
+instruction in its reasoning in 7 of 4,800 filter traces and never in its content, so pilot results are
+not affected.
+
+Options, not chosen, for the mentor: (a) a hosted-model wording of each arm that says what the scratch area
+is without spelling the tags (for gpt-oss and DeepSeek the tags are not their format anyway), which changes
+the manipulation and so must be decided before any further runs; (b) keep the wording and reconstruct each
+trace from both fields, which cannot recover the order reliably; (c) defer Qwen3.5 to vLLM, where the split
+is on token ids, but a quoted tag written as the special token would split there too, so (a) may be needed
+anyway.

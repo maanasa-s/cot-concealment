@@ -82,9 +82,10 @@ def main():
         ax.set_title(rate.replace("_", " ").capitalize())
         ax.set_ylim(0, 1)
     axes[0].set_ylabel("Rate")
-    axes[0].legend(frameon=False, fontsize=8)
+    handles, labels = axes[0].get_legend_handles_labels()
+    fig.legend(handles, labels, loc="lower center", ncol=len(models), frameon=False)
     fig.suptitle("Hint cue test across models, wrong option hinted (grader framing)")
-    fig.tight_layout()
+    fig.tight_layout(rect=(0, 0.08, 1, 1))
     figure_path = out / "figures" / "hint_cue_test_models.png"
     figure_path.parent.mkdir(parents=True, exist_ok=True)
     fig.savefig(figure_path, dpi=150)

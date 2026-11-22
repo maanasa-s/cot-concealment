@@ -309,6 +309,27 @@ uv run -m scripts.run_hint_cue_test \
 
 The default of 20 items x 5 conditions x 4 samples is 400 generation calls plus up to 320 judge calls.
 
+## Stage: compare hint cue tests across models
+
+Puts finished `run_hint_cue_test` runs from several models side by side. Adds, per hint, the resisted set split
+by whether the trace mentions the hint, since a resisted trace that never mentions it may not have registered
+it, which matters for using the resisted set as the probes' control. No API calls.
+
+**Input:** comma-separated `summary.json` paths; each run's `generations.jsonl` is read from the same folder.
+**Output:**
+- `<output_dir>/hint_cue_test_models.json` — `git_hash`, config, and per model `model_id`, `summary_path`,
+  `no_hint_correct_rate`, and per hint the summary fields plus `n_resisted` and `n_resisted_unmentioned`
+- `<output_dir>/figures/hint_cue_test_models.png` — switch, resist, mention-when-switched and
+  unmentioned-switch rates per hint, one bar per model
+
+**Run:**
+```bash
+uv run -m scripts.compare_hint_cue_tests \
+  --summary_paths results/raw/hint_cue_test_gptoss_v2/summary.json,results/raw/hint_cue_test_deepseek_v4_pro_v1/summary.json,results/raw/hint_cue_test_qwen3_5_27b_v1/summary.json \
+  --output_dir results/analysis/hint_cue_test_models_v1 \
+  --seed 42
+```
+
 ## Stage: behavioural filter on a hosted model
 
 `scripts.run_filter` takes `--backend openrouter` for the behaviour-only models (gpt-oss 120B, DeepSeek V4

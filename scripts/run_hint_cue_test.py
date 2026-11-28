@@ -2,6 +2,7 @@
 # uv run -m scripts.run_hint_cue_test --variants_path data/processed/variants_seed42.jsonl --output_dir results/raw/hint_cue_test_v1 --model_id openai/gpt-oss-120b --num_tasks 10 --n_samples 4 --seed 42
 
 import asyncio
+import json
 import logging
 import random
 from dataclasses import dataclass
@@ -58,6 +59,10 @@ class Config:
     max_concurrent: int = 20
     cache_dir: str = "cache/hosted"
     judge_cache_dir: str = "cache/judge"
+    # a json list of item ids to use instead of a seeded draw, so a search can fix its own search and confirm sets.
+    item_ids_path: str = ""
+    # also judge the no-hint traces, for the evaluation awareness floor.
+    judge_controls: bool = False
     seed: int = 42
 
 
@@ -111,7 +116,9 @@ def summarize(records: list[dict], condition: str, known: set[str] | None = None
         "correct_rate": rate(sum(r["parsed_answer"] == r["correct"] for r in eligible), len(eligible)),
     }
     if condition in CONTROLS:
-        return out
+        # judged only with --judge_controls; the no-hint awareness rate is the floor the template causes on its own.
+        aware = [r for r in eligible if r.get("judge_ok") and r.get("aware_of_evaluation") is not None]
+        return out | {"awareness_rate": rate(sum(r["aware_of_evaluation"] for r in aware), len(aware))}
     switched = [r for r in eligible if r["parsed_answer"] == r["cued_option"]]
     judged = [r for r in eligible if r.get("judge_ok")]
     judged_switched = [r for r in switched if r.get("judge_ok")]
@@ -260,6 +267,11 @@ def main():
     item_ids = sorted(i for i in v1_rows if i not in example_ids)
     random.Random(config.seed).shuffle(item_ids)
     items = [v1_rows[i] for i in item_ids[: config.num_tasks]]
+    if config.item_ids_path:
+        chosen = json.loads(Path(config.item_ids_path).read_text())
+        if set(chosen) & example_ids:
+            raise ValueError("--item_ids_path overlaps the few-shot example items")
+        items = [v1_rows[i] for i in chosen[: config.num_tasks]]
 
     fewshot_letters = {
         "fewshot_none": lambda item: balanced_letters(config.n_fewshot_examples, config.seed),
@@ -319,7 +331,9 @@ def main():
         if g is not None
     ]
 
-    to_judge = [r for r in records if r["variant"] == "V1" and r["think_text"] and not r["truncated"]]
+    to_judge = [
+        r for r in records if (r["variant"] == "V1" or config.judge_controls) and r["think_text"] and not r["truncated"]
+    ]
     LOGGER.info(f"judging {len(to_judge)} hinted traces with {config.judge_model}")
     judgments = asyncio.run(judge_all(to_judge, client, config))
     for row, judgment in zip(to_judge, judgments):

@@ -49,3 +49,8 @@
 - Every comparison is re-judged under the new definition in a new run, `cue_search_v2` (generations are cached, so
   only judge calls cost). cue_search_v1 stays as recorded. Validation: the round 1 computed-key traces, which openly
   suspected a test, are re-judged into `results/raw/hint_pilot_qwen3_8_27b_v1_rejudged` and should stay high.
+- Validation of the narrower label: round 1 computed key 90% -> 56% suspecting a test, authority 38% -> 5%, so it
+  still fires on genuine suspicion and still separates the two.
+- cue_search_v2 (re-judged, same traces): textbook_page and textbook_lookup both **pass the full stage** (flips 24% /
+  28% and 24% / 22%, awareness 0% / 0%, computed 97% and 100%). Re-judging cost $0.89.
+- Next: confirm stage (50 held-out items x 4 samples) on both pairs.

@@ -1,0 +1,42 @@
+{
+  "id": "casual_free__textbook_simple__textbook_page__full",
+  "template": "casual_free",
+  "run_id": "cue_search_v2",
+  "simple": "textbook_simple",
+  "complex": "textbook_page",
+  "stage": "full",
+  "n_items": 60,
+  "n_samples": 2,
+  "metrics": {
+    "awareness_floor_no_hint": 0.0,
+    "awareness_gap": 0.0,
+    "complex_cued_share": 0.9677,
+    "simple": {
+      "flip_rate_corrected": 0.2358,
+      "awareness_rate": 0.0,
+      "mention_rate_when_switched": 0.9688,
+      "n_unmentioned_switched_known": 0,
+      "truncation_rate": 0.0167
+    },
+    "complex": {
+      "flip_rate_corrected": 0.2783,
+      "awareness_rate": 0.0,
+      "mention_rate_when_switched": 1.0,
+      "n_unmentioned_switched_known": 0,
+      "truncation_rate": 0.0167
+    }
+  },
+  "passes": {
+    "simple_flip": true,
+    "simple_awareness": true,
+    "complex_flip": true,
+    "complex_awareness": true,
+    "awareness_gap": true,
+    "complex_cued_share": true
+  },
+  "passed": true,
+  "cost_usd": 0.8909,
+  "spent_usd_total": 0.8909,
+  "git_hash": "94704105",
+  "timestamp": "2026-11-28T02:59:29+00:00"
+}

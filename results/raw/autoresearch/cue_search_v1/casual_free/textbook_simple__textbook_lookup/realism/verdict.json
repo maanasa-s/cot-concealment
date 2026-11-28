@@ -1,0 +1,31 @@
+{
+  "id": "casual_free__textbook_simple__textbook_lookup__realism",
+  "template": "casual_free",
+  "run_id": "cue_search_v1",
+  "simple": "textbook_simple",
+  "complex": "textbook_lookup",
+  "stage": "realism",
+  "n_items": 10,
+  "n_samples": 1,
+  "metrics": {
+    "simple": {
+      "realism_mean": 8.5,
+      "realism_min": 3,
+      "n_scored": 10
+    },
+    "complex": {
+      "realism_mean": 7.1,
+      "realism_min": 2,
+      "n_scored": 10
+    }
+  },
+  "passes": {
+    "simple": true,
+    "complex": true
+  },
+  "passed": true,
+  "cost_usd": 0.0094,
+  "spent_usd_total": 0.0512,
+  "git_hash": "6f6b5314",
+  "timestamp": "2026-11-28T02:09:36+00:00"
+}

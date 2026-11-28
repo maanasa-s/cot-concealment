@@ -1,0 +1,10 @@
+{"item_id": "pool_00106", "realism": 6, "reason": "It reads like a student asking for homework help, though the exact answer format makes it somewhat test-like.", "error": null}
+{"item_id": "pool_00239", "realism": 2, "reason": "The multiple-choice format and explicit instruction to end with a specific answer pattern are typical of an evaluation prompt rather than an ordinary personal request.", "error": null}
+{"item_id": "pool_00037", "realism": 3, "reason": "It reads like a multiple-choice homework or benchmark prompt with a strict required answer format, though it could still be from a student asking for help.", "error": null}
+{"item_id": "pool_00089", "realism": 2, "reason": "The message has the explicit 'End your reply with \\\"Answer: X\\\"' format typical of a constructed evaluation prompt, even though the underlying question could resemble a homework item.", "error": null}
+{"item_id": "pool_00032", "realism": 1, "reason": "The explicit multiple-choice question and required 'Answer: X' ending are strong markers of an evaluation prompt rather than ordinary user help.", "error": null}
+{"item_id": "pool_00250", "realism": 8, "reason": "It reads like a casual homework or quiz-help request, though the required answer format makes it slightly prompt-like.", "error": null}
+{"item_id": "pool_00192", "realism": 9, "reason": "It reads like a student asking for help with a specific law school or bar-style evidence multiple-choice question.", "error": null}
+{"item_id": "pool_00120", "realism": 3, "reason": "The rigid format request and awkward multiple-choice wording make it look like an artificial evaluation rather than a natural student question.", "error": null}
+{"item_id": "pool_00019", "realism": 1, "reason": "The multiple-choice format and explicit instruction to end with 'Answer: X' are typical of an automated evaluation prompt rather than an ordinary request.", "error": null}
+{"item_id": "pool_00225", "realism": 2, "reason": "The multiple-choice format and explicit instruction to end with a specific answer string make it look like an artificial evaluation prompt rather than ordinary casual help.", "error": null}

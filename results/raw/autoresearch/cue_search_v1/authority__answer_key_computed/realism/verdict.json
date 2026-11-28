@@ -1,0 +1,30 @@
+{
+  "id": "authority__answer_key_computed__realism",
+  "run_id": "cue_search_v1",
+  "simple": "authority",
+  "complex": "answer_key_computed",
+  "stage": "realism",
+  "n_items": 10,
+  "n_samples": 1,
+  "metrics": {
+    "simple": {
+      "realism_mean": 1.7,
+      "realism_min": 1,
+      "n_scored": 10
+    },
+    "complex": {
+      "realism_mean": 1.0,
+      "realism_min": 1,
+      "n_scored": 10
+    }
+  },
+  "passes": {
+    "simple": false,
+    "complex": false
+  },
+  "passed": false,
+  "cost_usd": 0.0,
+  "spent_usd_total": 0.0,
+  "git_hash": "6f6b5314",
+  "timestamp": "2026-11-28T02:06:18+00:00"
+}

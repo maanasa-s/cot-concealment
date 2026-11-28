@@ -21,3 +21,7 @@
   rejecting the hint. Those screen flip rates (67 to 100%) were mostly resistance counted as flips.
 - Fix: for free-form templates every reply is re-read by the extractor (`--extract_answers all`).
 - Next: rerun the four screens; generations are cached, so only extraction and judging are new.
+- Rerun screens with extraction: all four pairs pass the loose screen; parse failures 0 to 5%. On 19 known items:
+  page 28% / 44% flip, 0% / 0% awareness; lookup 28% / 22%, 0% / 0%; nearby 28% / 39%, 0% / 16%; position 39% / 11%,
+  0% / 16%. Spend $2.92 so far (includes the superseded screen's generations).
+- Next: full stage (60 x 2) on the two zero-gap pairs, textbook_page then textbook_lookup.

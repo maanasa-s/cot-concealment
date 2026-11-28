@@ -352,7 +352,7 @@ uv run -m scripts.plot_hint_pilot \
 
 ## Stage: midterm report figures
 
-Draws the two figures in `docs/midterm_report.md` from the committed hint cue runs: the share of flips whose
+Draws two summary figures from the committed hint cue runs (used in the SPAR midterm report): the share of flips whose
 reasoning never mentions the hint, by model and hint family, with exact 95% intervals; and evaluation
 awareness against corrected flip rate for each cue on Qwen3.8 27B, gpt-oss 20B and gpt-oss 120B. All counts
 use known questions (correct in every no-hint sample of the same run). No API calls.
@@ -366,13 +366,6 @@ use known questions (correct in every no-hint sample of the same run). No API ca
 **Run:**
 ```bash
 uv run -m scripts.plot_midterm_figures --output_dir results/analysis/midterm_v1 --seed 42
-```
-
-The report itself is `docs/midterm_report.typ` (Typst source of the PDF); `docs/midterm_report.md` holds the same
-text for the Word export. Build the PDF from the repo root, without adding Typst to the project:
-
-```bash
-uv run --no-project --with typst==0.13.2 python -c "import typst; typst.compile('docs/midterm_report.typ', output='docs/midterm_report.pdf', root='.')"
 ```
 
 ## Stage: behavioural filter on a hosted model

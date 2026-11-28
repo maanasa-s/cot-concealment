@@ -14,4 +14,4 @@ data/raw/*
 .claude/settings.local.json
 .claude/*.tmp.*
 *.log
-uv.lock
+uv.lockprivate/

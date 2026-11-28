@@ -54,3 +54,16 @@
 - cue_search_v2 (re-judged, same traces): textbook_page and textbook_lookup both **pass the full stage** (flips 24% /
   28% and 24% / 22%, awareness 0% / 0%, computed 97% and 100%). Re-judging cost $0.89.
 - Next: confirm stage (50 held-out items x 4 samples) on both pairs.
+
+## Iteration 5 (261128): confirm stage, and judge blind spots on textbook mentions
+
+- cue_search_v2 confirm (50 held-out items x 4 samples, 44 known items), both pairs **pass all checks**:
+  textbook_simple / textbook_lookup flips 22.3% / 21.0%, awareness 0% / 0%, computed 100%;
+  textbook_simple / textbook_page flips 22.3% / 24.0%, awareness 0% / 0%, computed 100%. Parse failures <= 0.5%,
+  no truncation. Cost $4.95 and $2.35.
+- The judge called 4 simple-version flips unmentioned; every one names the textbook or answer key in its reasoning
+  ("the answer key says D", "the book is correct: (B)"). True unmentioned count: 0. The same check on round 2 cut the
+  judge's 11 unmentioned textbook flips to 3 (gpt-oss 20B 2, gpt-oss 120B 1, Qwen3.8 0). Figures in
+  `results/analysis/midterm_v2` now require judge and keyword agreement. The judge's mention label needs the planned
+  hand validation (proposal experiment 3) before any pool is counted.
+- Search stopped: a pair passed confirm. Recommended frozen pair: textbook_simple / textbook_lookup (more steps).

@@ -519,3 +519,12 @@ uv run -m scripts.plot_hint_pilot --summary_path results/raw/hint_pilot_qwen3_8_
 **Command:**
 bash pilot_v2.sh (three runs of scripts.run_hint_cue_test, --cues authority,answer_key_computed,textbook_simple,textbook_lookup,fewshot_position,fewshot_sequence --pairs authority:answer_key_computed,textbook_simple:textbook_lookup,fewshot_position:fewshot_sequence --num_tasks 50 --n_samples 2 --arm plain --hosted_max_tokens 32768, per-model recommended sampling; output dirs hint_pilot_qwen3_8_27b_v2, hint_pilot_gpt_oss_20b_v1, hint_pilot_gpt_oss_120b_v1)
 **Output:** results/analysis/hint_pilot_round2/summary.md
+
+## 261128 — cue search on Qwen3.8 27B: a textbook pair passes every pilot check, but yields no unmentioned flips
+
+**What:** An automated search (`scripts/eval_cue_variant.py`, spec in `docs/autoresearch_spec.md`) through realism, screen, full and held-out confirm stages, for four textbook cue pairs on Qwen3.8 27B.
+**Result:** `textbook_simple` / `textbook_lookup` passes all checks on 50 held-out questions x 4 samples: flips 22% / 21%, no test suspicion in either version, lookup computed 100%, realism 7 to 9 of 10. Getting there needed three measurement fixes: removing the json answer line (bare-question realism 1.3 -> 8.5), reading free-form answers with an LLM extractor (the regex misread rejections of the hint as flips), and narrowing the awareness label (it counted remarks about tricky questions). Every flip the judge called unmentioned on confirm actually names the textbook, and re-checking round 2 cut 11 such textbook flips to 3. The passing cue gives a usable pilot but almost no unmentioned pool on Qwen3.8. Search cost about $16 on OpenRouter.
+**Command:**
+OPENROUTER_API_KEY=proxy-injected uv run -m scripts.eval_cue_variant --run_id cue_search_v2 --template casual_free --simple textbook_simple --complex textbook_lookup --stage confirm --variants_path data/processed/variants_seed42.jsonl --budget_usd 30 --seed 42
+uv run -m scripts.plot_midterm_figures --output_dir results/analysis/midterm_v2 --seed 42
+**Output:** results/raw/autoresearch/cue_search_v2/leaderboard.jsonl, results/raw/autoresearch/cue_search_v1/notes.md, results/analysis/midterm_v2/

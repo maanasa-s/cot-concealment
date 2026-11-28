@@ -25,3 +25,10 @@
   page 28% / 44% flip, 0% / 0% awareness; lookup 28% / 22%, 0% / 0%; nearby 28% / 39%, 0% / 16%; position 39% / 11%,
   0% / 16%. Spend $2.92 so far (includes the superseded screen's generations).
 - Next: full stage (60 x 2) on the two zero-gap pairs, textbook_page then textbook_lookup.
+
+## Iteration 3 (261128): full stage
+
+- textbook_simple / textbook_page, 60 items x 2, 54 known items: flips 23.6% / 27.8%, awareness 2.5% / 8.5%,
+  complex computed 96.8%, parse failures under 1%. **Fails only the awareness gap: 5.9 points against a 5-point bar.**
+  Not frozen, per the rule. Cost $2.78; run total $5.89.
+- Next: textbook_lookup full stage (running); read the page version's awareness-flagged traces to see what raises it.

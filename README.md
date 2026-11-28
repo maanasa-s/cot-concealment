@@ -368,6 +368,13 @@ use known questions (correct in every no-hint sample of the same run). No API ca
 uv run -m scripts.plot_midterm_figures --output_dir results/analysis/midterm_v1 --seed 42
 ```
 
+The report itself is `docs/midterm_report.typ` (Typst source of the PDF); `docs/midterm_report.md` holds the same
+text for the Word export. Build the PDF from the repo root, without adding Typst to the project:
+
+```bash
+uv run --no-project --with typst==0.13.2 python -c "import typst; typst.compile('docs/midterm_report.typ', output='docs/midterm_report.pdf', root='.')"
+```
+
 ## Stage: behavioural filter on a hosted model
 
 `scripts.run_filter` takes `--backend openrouter` for the behaviour-only models (gpt-oss 120B, DeepSeek V4

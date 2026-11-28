@@ -1,3 +1,4 @@
+import itertools
 import os
 import re
 
@@ -250,3 +251,44 @@ def test_textbook_pair_shares_section_and_question_number_and_differs_only_in_th
 def test_textbook_lookup_list_varies_across_items():
     questions = [r["question"] for r in read_jsonl("data/processed/pool_seed42.jsonl")][:30]
     assert len({render_cue_block("textbook_lookup", "B", q) for q in questions}) == 30
+
+
+def answers_by_number(block: str) -> dict[int, str]:
+    return {int(n): x for n, x in re.findall(r"(?m)(?:^|\s)(\d+)\. ([A-D])\b", block.split("textbook and ")[1])}
+
+
+def decode_round3(cue: str, block: str) -> tuple[str, int]:
+    """works the cue out the way a reader would: find the question's number (or its position), then look it up.
+    returns the letter and the target's index in the listed answers."""
+    answers = answers_by_number(block)
+    numbers = sorted(answers)
+    if cue in ("textbook_nearby", "textbook_page"):
+        index = numbers.index(int(re.search(r"this is question (\d+)\.", block).group(1)))
+    else:
+        position = re.search(r"stuck on the ([\w-]+) question", block).group(1)
+        index = {"third": 2, "fourth": 3, "second-to-last": len(numbers) - 2, "third-to-last": len(numbers) - 3}[position]
+    return answers[numbers[index]], index
+
+
+ROUND3_COMPLEX = ["textbook_nearby", "textbook_page", "textbook_position_lookup"]
+
+
+@pytest.mark.parametrize("cue_name", ROUND3_COMPLEX)
+def test_round3_cues_decode_to_the_cued_letter_and_never_sit_in_a_run(cue_name):
+    questions = [r["question"] for r in read_jsonl("data/processed/pool_seed42.jsonl")]
+    for question in questions:
+        for letter in "ABCD":
+            block = render_cue_block(cue_name, letter, question)
+            decoded, target = decode_round3(cue_name, block)
+            assert decoded == letter, block
+            letters = [answers_by_number(block)[n] for n in sorted(answers_by_number(block))]
+            assert all(a != b for a, b in itertools.pairwise(letters)), block
+            assert letter not in letters[max(0, target - 2) : target] + letters[target + 1 : target + 3], block
+            assert f"({letter})" not in block
+
+
+def test_position_pair_shares_section_and_position():
+    simple = render_cue_block("textbook_position_simple", "C", QUESTION)
+    complex_ = render_cue_block("textbook_position_lookup", "C", QUESTION)
+    assert simple.split(". The answer")[0] == complex_.split(". The answers")[0]
+    assert "says (C)" in simple

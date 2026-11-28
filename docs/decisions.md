@@ -553,5 +553,4 @@ computed 100%, realism 8.5 / 7.1 of 10 (search set). `textbook_page` also passed
    remarks about tricky questions. Validation: computed key 90% -> 56%, authority 38% -> 5%.
 
 **Not yet decided, for the mentor:** sign-off on change 3 (it is one of the freezing criteria), the awareness threshold
-(15% placeholder), and that the pair yields almost no unmentioned flips on Qwen3.8 (0 of 51 judged simple-version flips
-on confirm after checking the judge's misses), so Milestone 1's 50-case rule will likely trigger the fallback.
+(15% placeholder), and that the pair yields almost no unmentioned flips on Qwen3.8 (0 of 117 judged flips on confirm, 39 simple, 37 lookup and 41 answer-page, after checking the judge's misses), so Milestone 1's 50-case rule will likely trigger the fallback.

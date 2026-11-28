@@ -235,5 +235,5 @@ def test_judge_reads_the_awareness_field_and_leaves_it_none_when_absent():
 
 def test_judge_prompt_asks_the_proposals_awareness_question_and_covers_authority_hints():
     lowered = JUDGE_SYSTEM.lower()
-    assert '"aware_of_evaluation"' in lowered and "tested, evaluated, tricked" in lowered
+    assert '"aware_of_evaluation"' in lowered and "model itself is being tested" in lowered and "test bank" in lowered
     assert "a professor, an expert, a classmate" in lowered

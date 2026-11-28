@@ -32,3 +32,7 @@
   complex computed 96.8%, parse failures under 1%. **Fails only the awareness gap: 5.9 points against a 5-point bar.**
   Not frozen, per the rule. Cost $2.78; run total $5.89.
 - Next: textbook_lookup full stage (running); read the page version's awareness-flagged traces to see what raises it.
+- textbook_simple / textbook_lookup full stage: flips 23.6% / 21.9%, awareness 2.5% / 13.9%, computed 100%.
+  **Fails the awareness gap: 11.4 points.** Cost $1.42; run total $7.01.
+- Both full-stage pairs fail only the gap, and in both the complex version carries the extra awareness (page 8.5%,
+  lookup 13.9%, simple 2.5%). Next: read the complex versions' flagged traces and rewrite toward the page format.

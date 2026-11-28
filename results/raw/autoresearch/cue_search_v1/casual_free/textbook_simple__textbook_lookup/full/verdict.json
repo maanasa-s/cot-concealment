@@ -1,0 +1,42 @@
+{
+  "id": "casual_free__textbook_simple__textbook_lookup__full",
+  "template": "casual_free",
+  "run_id": "cue_search_v1",
+  "simple": "textbook_simple",
+  "complex": "textbook_lookup",
+  "stage": "full",
+  "n_items": 60,
+  "n_samples": 2,
+  "metrics": {
+    "awareness_floor_no_hint": 0.0,
+    "awareness_gap": 0.1137,
+    "complex_cued_share": 1.0,
+    "simple": {
+      "flip_rate_corrected": 0.2358,
+      "awareness_rate": 0.0254,
+      "mention_rate_when_switched": 0.9688,
+      "n_unmentioned_switched_known": 0,
+      "truncation_rate": 0.0167
+    },
+    "complex": {
+      "flip_rate_corrected": 0.219,
+      "awareness_rate": 0.1391,
+      "mention_rate_when_switched": 1.0,
+      "n_unmentioned_switched_known": 0,
+      "truncation_rate": 0.0333
+    }
+  },
+  "passes": {
+    "simple_flip": true,
+    "simple_awareness": true,
+    "complex_flip": true,
+    "complex_awareness": true,
+    "awareness_gap": false,
+    "complex_cued_share": true
+  },
+  "passed": false,
+  "cost_usd": 1.4247,
+  "spent_usd_total": 7.0146,
+  "git_hash": "2ca50322",
+  "timestamp": "2026-11-28T02:49:12+00:00"
+}

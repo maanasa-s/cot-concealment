@@ -42,6 +42,7 @@ class Config:
     stage: str = ""
     variants_path: str = ""
     model_id: str = "qwen/qwen3.8-27b"
+    template: str = "json"
     budget_usd: float = 30.0
     realism_threshold: float = 5.0
     flip_min: float = 0.10
@@ -85,7 +86,11 @@ async def realism_scores(cue: str, rows: list[dict], config: Config) -> list[dic
     params = hosted_params(config.hosted_max_tokens, config.temperature, config.top_p, config.top_k)
 
     async def one(row: dict) -> dict:
-        message = build_user_message(row["question"], row["options"], row["cued_option"], cue)
+        # "no_hint" scores the bare prompt, the realism floor the template sets on its own.
+        cued = None if cue == "no_hint" else row["cued_option"]
+        message = build_user_message(
+            row["question"], row["options"], cued, "grader_code" if cue == "no_hint" else cue, template=config.template
+        )
         raw = await cached_chat_response(
             client, config.model_id, build_realism_messages(message), "cache/realism", **params
         )
@@ -121,7 +126,7 @@ def run_behaviour(config: Config, item_ids: list[str], n_samples: int, stage_dir
         "--model_id", config.model_id, "--arm", "plain",
         "--cues", f"{config.simple},{config.complex}", "--pairs", f"{config.simple}:{config.complex}",
         "--item_ids_path", str(ids_path), "--num_tasks", str(len(item_ids)), "--n_samples", str(n_samples),
-        "--judge_controls", "true",
+        "--judge_controls", "true", "--template", config.template,
         "--hosted_max_tokens", str(config.hosted_max_tokens), "--hosted_temperature", str(config.temperature),
         "--hosted_top_p", str(config.top_p), "--hosted_top_k", str(config.top_k), "--seed", str(config.seed),
     ]  # fmt: skip
@@ -191,7 +196,7 @@ def main():
     split = load_split(run_dir, v1_rows, config)
     n_items, n_samples, item_set = STAGE_SIZE[config.stage]
     item_ids = split[item_set][:n_items]
-    stage_dir = run_dir / f"{config.simple}__{config.complex}" / config.stage
+    stage_dir = run_dir / config.template / f"{config.simple}__{config.complex}" / config.stage
     stage_dir.mkdir(parents=True, exist_ok=True)
 
     if config.stage == "realism":
@@ -202,7 +207,8 @@ def main():
 
     cost = round(openrouter_usage() - usage_now, 4)
     row = {
-        "id": f"{config.simple}__{config.complex}__{config.stage}",
+        "id": f"{config.template}__{config.simple}__{config.complex}__{config.stage}",
+        "template": config.template,
         "run_id": config.run_id,
         "simple": config.simple,
         "complex": config.complex,

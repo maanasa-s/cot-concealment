@@ -63,6 +63,8 @@ class Config:
     item_ids_path: str = ""
     # also judge the no-hint traces, for the evaluation awareness floor.
     judge_controls: bool = False
+    # prompts.USER_TEMPLATES key; "json" is the original, "casual" and "casual_after" ask like a student (§27).
+    template: str = "json"
     seed: int = 42
 
 
@@ -287,9 +289,11 @@ def main():
         if condition in fewshot_letters:
             examples = build_examples(example_items, fewshot_letters[condition](item))
             return build_user_message(
-                item["question"], item["options"], cued, condition if cued else FEWSHOT_CUE, examples
+                item["question"], item["options"], cued, condition if cued else FEWSHOT_CUE, examples, config.template
             )
-        return build_user_message(item["question"], item["options"], cued, condition if cued else "grader_code")
+        return build_user_message(
+            item["question"], item["options"], cued, condition if cued else "grader_code", template=config.template
+        )
 
     prompts = [(item, condition, variant) for condition, variant in conditions for item in items]
     messages = [chat_messages(SYSTEM_PROMPTS[config.arm], user_message(*p)) for p in prompts]
@@ -323,7 +327,9 @@ def main():
             "prompt_fingerprint": prompt_fingerprint(
                 config.arm,
                 condition if variant == "V1" else (FEWSHOT_CUE if condition == "fewshot_none" else "grader_code"),
+                config.template,
             ),
+            "template": config.template,
         }
         | g.model_dump()
         for (item, condition, variant), gens in zip(prompts, generations)

@@ -350,6 +350,24 @@ uv run -m scripts.plot_hint_pilot \
   --seed 42
 ```
 
+## Stage: midterm report figures
+
+Draws the two figures in `docs/midterm_report.md` from the committed hint cue runs: the share of flips whose
+reasoning never mentions the hint, by model and hint family, with exact 95% intervals; and evaluation
+awareness against corrected flip rate for each cue on Qwen3.8 27B, gpt-oss 20B and gpt-oss 120B. All counts
+use known questions (correct in every no-hint sample of the same run). No API calls.
+
+**Input:** the `generations.jsonl` of the runs listed in `RUNS` inside the script.
+**Output:**
+- `<output_dir>/figures/fig1_unmentioned_share.png`, `<output_dir>/figures/fig2_awareness_vs_flip.png`
+- `<output_dir>/midterm_figures.json`: `git_hash`, config, per-run per-cue counts and rates, pooled figure 1
+  values and figure 2 points
+
+**Run:**
+```bash
+uv run -m scripts.plot_midterm_figures --output_dir results/analysis/midterm_v1 --seed 42
+```
+
 ## Stage: behavioural filter on a hosted model
 
 `scripts.run_filter` takes `--backend openrouter` for the behaviour-only models (gpt-oss 120B, DeepSeek V4

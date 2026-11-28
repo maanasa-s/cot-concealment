@@ -126,7 +126,7 @@ def run_behaviour(config: Config, item_ids: list[str], n_samples: int, stage_dir
         "--model_id", config.model_id, "--arm", "plain",
         "--cues", f"{config.simple},{config.complex}", "--pairs", f"{config.simple}:{config.complex}",
         "--item_ids_path", str(ids_path), "--num_tasks", str(len(item_ids)), "--n_samples", str(n_samples),
-        "--judge_controls", "true", "--template", config.template,
+        "--judge_controls", "true", "--template", config.template, "--extract_answers", "all" if config.template.startswith("casual") else "unparsed",
         "--hosted_max_tokens", str(config.hosted_max_tokens), "--hosted_temperature", str(config.temperature),
         "--hosted_top_p", str(config.top_p), "--hosted_top_k", str(config.top_k), "--seed", str(config.seed),
     ]  # fmt: skip

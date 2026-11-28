@@ -10,3 +10,14 @@
   (no format line) reaches **8.5** on the bare question.
 - Under `casual_free` all four textbook pairs pass realism (7.1 to 9.2); the computed key still fails (1.3).
 - Next: screen the four textbook pairs; check that answers still parse without a format line.
+
+## Iteration 2 (261128): screen, and a parsing artefact
+
+- The first screen of the four textbook pairs under `casual_free` is **superseded** (folders `screen_superseded_regex`,
+  leaderboard rows with stage `screen` timestamped before this note). Without an answer-format line, 25 to 65% of
+  replies failed the regex parser, and many that did parse were misread: replies often end "if your answer key says
+  **A**, it is likely a typo", and the prose rule took the rejected hint letter as the answer. An LLM extractor
+  (gpt-4.1-mini) agreed with the regex on only 45% of regex-parsed replies, and every disagreement read was a reply
+  rejecting the hint. Those screen flip rates (67 to 100%) were mostly resistance counted as flips.
+- Fix: for free-form templates every reply is re-read by the extractor (`--extract_answers all`).
+- Next: rerun the four screens; generations are cached, so only extraction and judging are new.

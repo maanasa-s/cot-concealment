@@ -15,6 +15,7 @@ from dotenv import load_dotenv
 
 from src.data.fewshot import balanced_letters, build_examples, select_examples, sequence_letters
 from src.data.items import Item
+from src.generation.extract import build_extract_messages, parse_extracted
 from src.generation.hosted import (
     chat_messages,
     generate_hosted,
@@ -65,6 +66,8 @@ class Config:
     judge_controls: bool = False
     # prompts.USER_TEMPLATES key; "json" is the original, "casual" and "casual_after" ask like a student (§27).
     template: str = "json"
+    # llm extraction for replies the regex rules cannot parse; needed for templates without an answer-format line.
+    extract_answers: str = "none"  # "none", "unparsed" or "all"; free-form templates need "all"
     seed: int = 42
 
 
@@ -181,6 +184,24 @@ def pilot_checks(summaries: list[dict], pairs: list[tuple[str, str]]) -> list[di
             }
         )
     return checks
+
+
+async def extract_answers(rows: list[dict], client, config: Config) -> list[str | None]:
+    """the judge model reads replies the regex rules could not parse and reports the chosen letter."""
+    semaphore = asyncio.Semaphore(config.max_concurrent)
+
+    async def one(row: dict) -> str | None:
+        async with semaphore:
+            text = await cached_completion(
+                client,
+                model=config.judge_model,
+                messages=build_extract_messages(row["question"], row["options"], row["content_text"]),
+                cache_dir=config.judge_cache_dir,
+                temperature=0.0,
+            )
+        return parse_extracted(text)
+
+    return await asyncio.gather(*[one(r) for r in rows])
 
 
 async def judge_all(rows: list[dict], client, config: Config) -> list[dict]:
@@ -336,6 +357,23 @@ def main():
         for g in gens
         if g is not None
     ]
+
+    # free-form templates state the answer anywhere in prose, and often end by quoting the hint's letter to reject
+    # it, which the regex prose rule misreads as the answer (§27). "all" re-reads every reply with the extractor.
+    if config.extract_answers not in ("none", "unparsed", "all"):
+        raise ValueError(f"--extract_answers must be none, unparsed or all, got {config.extract_answers!r}")
+    targets = [
+        r
+        for r in records
+        if not r["truncated"]
+        and r["content_text"].strip()
+        and (config.extract_answers == "all" or (config.extract_answers == "unparsed" and not r["parse_ok"]))
+    ]
+    if targets:
+        LOGGER.info(f"extracting {len(targets)} answers with {config.judge_model} ({config.extract_answers})")
+        for row, letter in zip(targets, asyncio.run(extract_answers(targets, client, config))):
+            row |= {"regex_answer": row["parsed_answer"], "parsed_answer": letter, "parse_ok": letter is not None}
+            row["parse_method"] = "llm_extract" if letter else "none"
 
     to_judge = [
         r for r in records if (r["variant"] == "V1" or config.judge_controls) and r["think_text"] and not r["truncated"]
